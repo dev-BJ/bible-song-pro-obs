@@ -52,7 +52,7 @@ Current release: `Version 1.0`
 3. In OBS, open `Docks > Custom Browser Docks`.
 4. Add a new dock.
 5. Set the URL/path to `Bible Song Pro panel.html`.
-6. Use `BSP_display.html` as the matching display/output page where needed in your OBS workflow.
+6. Use `BSP_display.html` as the matching display/browser source in your OBS scene.
 
 ## Recommended Setup
 

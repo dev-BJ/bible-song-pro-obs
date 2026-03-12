@@ -12,7 +12,7 @@ Current release: `Version 1.0`
 
 ## 2. Open The Display Page
 
-Use `BSP_display.html` as the display/output page in the part of your workflow where the projected text should appear.
+Use `BSP_display.html` as the matching display/browser source in your OBS scene.
 
 ## 3. Main Workflow
 
