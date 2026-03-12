@@ -79,6 +79,7 @@ Current release: `Version 1.0`
 ### Standout Features
 
 ![Auto-Retrieve Lyrics 01](Bible%20Song%20Pro_Screenshot/Auto-Retrieve%20Lyrics%2001.png)
+![Auto-Retrieve Lyrics 02](Bible%20Song%20Pro_Screenshot/Auto-Retrieve%20Lyrics%2002.png)
 ![Dual Bible Version 01](Bible%20Song%20Pro_Screenshot/Dual%20Bible%20Version%2001.png)
 ![Quick Actions](Bible%20Song%20Pro_Screenshot/Quick%20Actions.png)
 ![Support for 50+ Languages](Bible%20Song%20Pro_Screenshot/Support%20for%2050%2B%20Languages.png)
