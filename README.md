@@ -28,6 +28,8 @@ Current release: `Version 1.0`
   Change important options fast without digging through the full settings panel.
 - `Flexible Styling`
   Adjust typography, colors, backgrounds, alignment, spacing, shadows, and layout behavior.
+- `Flexible Background Types`
+  Choose between color, image, and video backgrounds, with support for both file uploads and direct image/video links.
 - `Setlist Workflow`
   Organize service flow and project items directly from a prepared running order.
 - `OBS-Centered Workflow`
