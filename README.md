@@ -103,6 +103,8 @@ The download package for end users is:
 
 - `Bible-Song-Pro-plugin.zip`
 
+[![Download Bible Song Pro](https://img.shields.io/badge/Download-Bible%20Song%20Pro%20v1.0-0a84ff?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Johnbatey/Bible-Song-Pro/releases/download/v1.0/Bible-Song-Pro-plugin.zip)
+
 That zip contains only:
 
 - `Bible Song Pro panel.html`
