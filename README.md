@@ -68,6 +68,12 @@ Current release: `Version 1.0`
 - Copyright: [COPYRIGHT.md](COPYRIGHT.md)
 - License: [LICENSE](LICENSE)
 
+## Interactive Feature Tour
+
+For a more guided visual walkthrough of the plugin features, open the interactive feature tour:
+
+- [Launch Feature Tour](https://johnbatey.github.io/Bible-Song-Pro/)
+
 ## Screenshots
 
 ### Main Interface
