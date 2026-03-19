@@ -77,6 +77,13 @@ Get the latest version here:
 
 ---
 
+## Support
+
+- Instagram: `https://www.instagram.com/johnsonolakotan`
+- [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-orange?style=for-the-badge)](https://buymeacoffee.com/johnsonolakotan)
+
+---
+
 ## License
 
 GPL-3.0. See [LICENSE](LICENSE) for full terms.
