@@ -1,108 +1,79 @@
-# Bible Song Pro
+# Bible Song Pro – OBS Overlay for Bible Verses & Song Lyrics
 
-`Bible Song Pro` is a powerful OBS custom dock plugin built for churches, worship teams, live events, and presentation workflows that need Bible verses and song lyrics projected quickly, cleanly, and professionally from one control panel.
+A modern church presentation system for OBS Studio that lets you display Bible verses and song lyrics in real-time.
 
-It combines Bible presentation, lyric management, setlist control, styling, themes, and live-output tools into a single OBS-friendly workflow.
+---
 
-Current release: `Version 1.0`
+## Preview
 
-## Key Features
+![Preview](assets/showcase/rendered/interface-01-card.png)
 
-- `Auto-Retrieve Lyrics`
-  Search and pull in lyrics quickly to speed up song preparation.
-- `Dual Bible Version`
-  Display and work with two Bible versions in a stacked layout for clearer comparison and projection flexibility.
-- `Multi-Language Interface`
-  Switch the plugin interface language from settings.
-- `50+ Supported Languages`
-  Built to serve multilingual churches and international users.
-- `250+ Bible Versions Supported`
-  Work across a wide range of Bible translations and imported versions.
-- `Beautiful Themes`
-  Choose from multiple polished themes to match your style and workflow.
-- `Full Screen and Lower Third Modes`
-  Present verses and lyrics in the format that best fits your production.
-- `Song and Bible Projection In One Dock`
-  Control songs, Bible verses, and setlists without jumping between separate tools.
-- `Quick Settings Access`
-  Change important options fast without digging through the full settings panel.
-- `Flexible Styling`
-  Adjust typography, colors, backgrounds, alignment, spacing, shadows, and layout behavior.
-- `Flexible Background Types`
-  Choose between color, image, and video backgrounds, with support for both file uploads and direct image/video links.
-- `Setlist Workflow`
-  Organize service flow and project items directly from a prepared running order.
-- `OBS-Centered Workflow`
-  Built specifically with OBS dock use in mind, not as a generic web app.
+---
 
-## Included Files
+## Get Started
 
-- `Bible Song Pro panel.html`
-- `BSP_display.html`
+👉 Download the latest version: [Download Here](https://github.com/Johnbatey/bible-song-pro-obs/releases/latest)
 
-## What It Does
+👉 Watch demo: [YouTube Demo](https://www.youtube.com/watch?v=4SVs5jyYx3o)
 
-- Projects Bible verses and song lyrics with a clean live-control workflow
-- Supports both Full Screen and Lower Third presentation modes
-- Lets you manage Bible versions, songs, setlists, styles, backgrounds, and projection settings
-- Runs inside OBS as a custom dock workflow for fast live use
+---
 
-## Install In OBS
+## Features
 
-1. Download the release zip.
-2. Extract the zip to a folder on your computer.
-3. In OBS, open `Docks > Custom Browser Docks`.
-4. Add a new dock.
-5. Set the URL/path to `Bible Song Pro panel.html`.
-6. Use `BSP_display.html` as the matching display/browser source in your OBS scene.
+- Real-time Bible verse display
+- Real-time song lyrics presentation
+- Clean broadcast-style UI
+- Fully customizable display
+- Lightweight and fast
+- Works directly inside OBS Browser Source
 
-## Recommended Setup
+---
 
-- Keep both HTML files in the same folder.
-- Do not rename the files unless you also update any references that depend on them.
-- Use OBS local file access or a local web server if your OBS/browser policy requires it.
+## Setup (2 Minutes)
 
-## Documentation
+1. Open OBS Studio
+2. Add `BSP_display.html` as a Browser Source in your scene
+3. Add `Bible Song Pro panel.html` as an OBS custom browser dock
+4. Open the panel and start controlling your live display
 
-- Setup and usage guide: [HOWTO.md](HOWTO.md)
-- Copyright: [COPYRIGHT.md](COPYRIGHT.md)
-- License: [LICENSE](LICENSE)
+---
 
-## Screenshots
+## How It Works
 
-### Main Interface
+- `Bible Song Pro panel.html` -> Control interface
+- `BSP_display.html` -> OBS output screen
+- Real-time sync via `BroadcastChannel` API
 
-![Interface 01](assets/showcase/rendered/interface-01-card.png)
-![Lowerthird Mode](assets/showcase/rendered/lowerthird-card.png)
+---
 
-### Standout Features
+## Built for Churches
 
-![Auto-Retrieve Lyrics 02](assets/showcase/rendered/auto-lyrics-02-card.png)
-![Support for 50+ Languages](assets/showcase/rendered/languages-card.png)
-![Gradient Background](assets/showcase/rendered/gradient-card.png)
+Bible Song Pro is designed to help churches and ministries present scripture and song lyrics beautifully during live streams without complex software.
 
-More screenshots are available in the `Bible Song Pro_Screenshot` folder.
+---
 
-## Support The Project
+## Demo
 
-This plugin is provided free to help churches reach a wider audience with the message of the Gospel.
+Watch it in action:  
+[https://www.youtube.com/watch?v=4SVs5jyYx3o](https://www.youtube.com/watch?v=4SVs5jyYx3o)
 
-Donations are appreciated to support continued development and maintenance.
+---
 
-- Instagram: `https://www.instagram.com/johnsonolakotan`
-- [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-orange?style=for-the-badge)](https://buymeacoffee.com/johnsonolakotan)
+## Download
 
-## Distribution
+Get the latest version here:  
+[https://github.com/Johnbatey/bible-song-pro-obs/releases/latest](https://github.com/Johnbatey/bible-song-pro-obs/releases/latest)
 
-The download package for end users is:
+---
 
-- `Bible-Song-Pro-plugin.zip`
+## Tech Stack
 
-<a href="https://github.com/Johnbatey/Bible-Song-Pro/releases/download/v1.0/Bible-Song-Pro-plugin.zip">
-  <img src="assets/download-button.svg" alt="Download Bible Song Pro" height="132">
-</a>
+- HTML, CSS, JavaScript
+- `BroadcastChannel` API
+- OBS Browser Source
 
-That zip contains only:
+---
 
-- `Bible Song Pro panel.html`
-- `BSP_display.html`
+## License
+
+GPL-3.0. See [LICENSE](LICENSE) for full terms.

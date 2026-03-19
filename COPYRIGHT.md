@@ -2,12 +2,9 @@
 
 Copyright (c) 2026 Johnson Olakotan.
 
-All rights reserved.
+This project is open source under the GNU General Public License v3.0.
 
-This project, including its source files, interface design, layout, branding, and bundled release files, is protected by copyright law.
+You may use, study, modify, and redistribute this software under the terms of
+the GPL-3.0 license.
 
-This plugin is provided free for use.
-
-You may download, install, and use it free of charge.
-
-You may not copy, modify, redistribute, sublicense, sell, republish, or relicense this project, in whole or in part, without prior written permission from the copyright holder, except where such permission is explicitly granted in writing.
+See [LICENSE](LICENSE) for the full text.
