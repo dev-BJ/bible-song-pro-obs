@@ -7,9 +7,9 @@ A modern church presentation system for OBS Studio that lets you display Bible v
 ## Preview
 
 ![Preview](assets/showcase/rendered/interface-01-card.png)
-![Auto Retrieve Lyrics](Bible%20Song%20Pro_Screenshot/Auto-Retrieve%20Lyrics%2002.png)
-![Lowerthird Mode](Bible%20Song%20Pro_Screenshot/Lowerthird%20Mode.png)
-![Dual Bible Version](Bible%20Song%20Pro_Screenshot/Dual%20Bible%20Version%2002.png)
+![Lowerthird Mode](assets/showcase/rendered/lowerthird-card.png)
+![Auto Retrieve Lyrics](assets/showcase/rendered/auto-lyrics-02-card.png)
+![Dual Bible Version](assets/mockups/dual-bible-02-screen.svg)
 
 ---
 
