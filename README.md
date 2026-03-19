@@ -9,7 +9,7 @@ A modern church presentation system for OBS Studio that lets you display Bible v
 ![Preview](assets/showcase/rendered/interface-01-card.png)
 ![Lowerthird Mode](assets/showcase/rendered/lowerthird-card.png)
 ![Auto Retrieve Lyrics](assets/showcase/rendered/auto-lyrics-02-card.png)
-![Dual Bible Version](assets/mockups/dual-bible-02-screen.svg)
+![Languages Preview](assets/showcase/rendered/languages-card.png)
 
 ---
 
