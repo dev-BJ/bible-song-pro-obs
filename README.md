@@ -67,6 +67,10 @@ Watch it in action:
 Get the latest version here:  
 [https://github.com/Johnbatey/bible-song-pro-obs/releases/latest](https://github.com/Johnbatey/bible-song-pro-obs/releases/latest)
 
+<a href="https://github.com/Johnbatey/bible-song-pro-obs/releases/latest">
+  <img src="assets/download-button.svg" alt="Download Bible Song Pro" height="132">
+</a>
+
 ---
 
 ## Tech Stack
