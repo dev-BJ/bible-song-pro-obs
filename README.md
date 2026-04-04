@@ -88,7 +88,6 @@ Get the latest version here:
 - [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-orange?style=for-the-badge)](https://buymeacoffee.com/johnsonolakotan)
 
 ---
-
 ## Feedback Backend
 
 To let the in-app Feedback form create GitHub issues directly, run the bundled backend:
@@ -125,7 +124,6 @@ Quick path:
 The Worker setup is documented in [feedback-worker/README.md](feedback-worker/README.md).
 
 ---
-
 ## License
 
 GPL-3.0. See [LICENSE](LICENSE) for full terms.
