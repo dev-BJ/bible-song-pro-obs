@@ -2318,23 +2318,23 @@
     }
 
     /**
- * Converts pt (points) to vw (viewport width)
- * @param {number} pt - The value in points
- * @returns {number} - The equivalent value in vw units
- * Custom code by Phreaker
- */
-function convertPtToVw(pt) {
-  // 1pt = 1.3333... pixels (96 DPI / 72 pt per inch)
-  const px = pt * (96 / 72);
-  
-  // Get current viewport width (1vw = 1% of this width)
-  const viewportWidth = window.innerWidth;
-  
-  // Calculate vw: (px / viewportWidth) * 100
-  const vw = (px / viewportWidth) * 100;
-  
-  return (vw + 2).toFixed(3); // Returns as a string with 3 decimal places
-}
+   * Converts pt (points) to vw (viewport width)
+   * @param {number} pt - The value in points
+   * @returns {number} - The equivalent value in vw units
+   * Custom code by Phreaker
+   */
+  function convertPtToVw(pt) {
+    // 1pt = 1.3333... pixels (96 DPI / 72 pt per inch)
+    const px = pt * (96 / 72);
+
+    // Get current viewport width (1vw = 1% of this width)
+    const viewportWidth = window.innerWidth;
+
+    // Calculate vw: (px / viewportWidth) * 100
+    const vw = (px / viewportWidth) * 100;
+
+    return (vw + 2).toFixed(3); // Returns as a string with 3 decimal places
+  }
 
     function isGifSource(src) {
       if (!src) return false;
