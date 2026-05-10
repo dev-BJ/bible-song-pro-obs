@@ -566,6 +566,8 @@
         autoResizeFull: document.getElementById('auto-resize-full')?.value,
         autoResizeLT: document.getElementById('auto-resize-lt')?.value,
         refPositionFull: document.getElementById('ref-position-full')?.value,
+        fullOffsetX: document.getElementById('full-offset-x')?.value,
+        fullOffsetY: document.getElementById('full-offset-y')?.value,
         hAlignFullRef: fullRefHAlign,
         hAlignFull: fullHAlign,
         vAlignFull: fullVAlign,
@@ -666,6 +668,8 @@
       'autoResizeFull',
       'autoResizeLT',
       'refPositionFull',
+      'fullOffsetX',
+      'fullOffsetY',
       'ltWidthPct',
       'ltScalePct',
       'ltOffsetX',
@@ -728,6 +732,8 @@
         autoResizeFull: document.getElementById('auto-resize-full')?.value,
         autoResizeLT: document.getElementById('auto-resize-lt')?.value,
         refPositionFull: document.getElementById('ref-position-full')?.value,
+        fullOffsetX: document.getElementById('full-offset-x')?.value,
+        fullOffsetY: document.getElementById('full-offset-y')?.value,
         ltPresetSelection: document.getElementById('lt-preset-select')?.value || 'default',
         ltPresetUpdatesLive: document.getElementById('lt-preset-update-live')?.value !== 'false',
         ltWidthPct: document.getElementById('lt-width-pct')?.value,
@@ -856,9 +862,10 @@
 
     function updateSettingsTargetControl() {
       const value = normalizeSettingsTargetTab(settingsTargetTab);
-      ['follow', 'bible', 'songs', 'schedule'].forEach((key) => {
+        const activeKey = value === 'follow' ? getEffectiveSettingsTargetTab(value) : value;
+        ['follow', 'bible', 'songs', 'schedule'].forEach((key) => {
         const btn = document.getElementById(`settings-target-${key}`);
-        if (btn) btn.classList.toggle('active', key === value);
+          if (btn) btn.classList.toggle('active', key === activeKey);
       });
       if (typeof refreshSettingsTabVisibility === 'function') {
         refreshSettingsTabVisibility(getEffectiveSettingsTargetTab());
@@ -972,6 +979,8 @@
       if (next.autoResizeFull && document.getElementById('auto-resize-full')) document.getElementById('auto-resize-full').value = next.autoResizeFull;
       if (next.autoResizeLT && document.getElementById('auto-resize-lt')) document.getElementById('auto-resize-lt').value = next.autoResizeLT;
       if (next.refPositionFull && document.getElementById('ref-position-full')) document.getElementById('ref-position-full').value = next.refPositionFull;
+      if (next.fullOffsetX != null && document.getElementById('full-offset-x')) document.getElementById('full-offset-x').value = next.fullOffsetX;
+      if (next.fullOffsetY != null && document.getElementById('full-offset-y')) document.getElementById('full-offset-y').value = next.fullOffsetY;
       if (typeof renderLtPresetOptions === 'function') renderLtPresetOptions(next.ltPresetSelection || 'default', targetTab);
       if (typeof updateLtPresetUpdateLiveState === 'function') {
         updateLtPresetUpdateLiveState(next.ltPresetUpdatesLive !== false);
@@ -1090,7 +1099,7 @@
     }
 
     function handleSettingsTargetChange(target) {
-      setSettingsTargetTab(target || 'follow');
+      setSettingsTargetTab(target || 'bible');
     }
 
     function getSetlistSettingsSnapshot() {
@@ -1195,6 +1204,8 @@
         ltScalePct: document.getElementById('lt-scale-pct')?.value || 100,
         ltOffsetY: document.getElementById('lt-offset-y')?.value || 0,
         ltOffsetX: document.getElementById('lt-offset-x')?.value || 0,
+        fullOffsetX: document.getElementById('full-offset-x')?.value || 0,
+        fullOffsetY: document.getElementById('full-offset-y')?.value || 0,
         ltBorderRadius: document.getElementById('lt-border-radius')?.value || 0,
         bgToggle: document.getElementById('bg-toggle').checked,
         hAlignFullRef: fullRefHAlign,

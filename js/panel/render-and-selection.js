@@ -364,8 +364,26 @@
         empty.style.opacity = '0.7';
         empty.innerText = 'No matches found';
         list.appendChild(empty);
+        list._navMirrorItems = [];
         return;
       }
+      const bibleList = (activeBibleVersion && bibles[activeBibleVersion]) ? bibles[activeBibleVersion] : [];
+      list._navMirrorItems = results.map((entry, resultIndex) => {
+        const sourceItem = bibleList[entry.chapterIndex] || null;
+        return {
+          title: `${entry.book} ${entry.chapter}:${entry.verse}`,
+          snippet: entry.text || '',
+          active: currentSearchPos === resultIndex,
+          activate: () => {
+            currentSearchPos = resultIndex;
+            activateBibleSearchResult(entry.chapterIndex, entry.verse);
+          },
+          contextMenu: (clientX, clientY) => {
+            if (typeof window._openSidebarContextMenu !== 'function' || !sourceItem) return;
+            window._openSidebarContextMenu('bible', sourceItem, entry.chapterIndex, resultIndex, clientX, clientY, { bibleVerse: entry.verse });
+          }
+        };
+      });
       results.forEach((entry, resultIndex) => {
         const div = document.createElement('div');
         div.className = 'song-item';
@@ -662,7 +680,8 @@
       const qRaw = document.getElementById('song-search').value || "";
       const q = normalizeSearchText(qRaw);
       list.replaceChildren();
-      if (sidebarTab === 'bible' && qRaw.trim().length >= 2) {
+      list._navMirrorItems = [];
+      if (sidebarTab === 'bible' && qRaw.trim().length >= 2 && !isBibleReferenceQuery(qRaw)) {
         renderBibleSearchResults(qRaw);
         return;
       }
@@ -687,6 +706,7 @@
         }
       }
       const frag = document.createDocumentFragment();
+      const navMirrorItems = [];
       displayList.forEach((s, i) => {
         if (q && !getItemSearchableText(s).includes(q)) return;
         const itemIndex = (sidebarTab === 'bible' && displayIndices) ? displayIndices[i] : i;
@@ -759,9 +779,30 @@
           if (typeof window._openSidebarContextMenu !== 'function') return;
           window._openSidebarContextMenu(sidebarTab, s, itemIndex, i, e.clientX, e.clientY);
         });
+        navMirrorItems.push({
+          row: div,
+          title: s.title || '',
+          snippet: '',
+          active: currentItem === s,
+          activate: () => {
+            if (sidebarTab === 'schedule' && buttonContextTab === 'schedule') {
+              scheduleReturnTarget = buildScheduleRestoreTarget(s);
+              buttonContextTab = 'schedule';
+              selectItem(itemIndex);
+              return;
+            }
+            buttonContextTab = sidebarTab;
+            selectItem(itemIndex);
+          },
+          contextMenu: (clientX, clientY) => {
+            if (typeof window._openSidebarContextMenu !== 'function') return;
+            window._openSidebarContextMenu(sidebarTab, s, itemIndex, i, clientX, clientY);
+          }
+        });
         frag.appendChild(div);
       });
       list.appendChild(frag);
+      list._navMirrorItems = navMirrorItems;
       if (typeof window._refreshNavMirrorResults === 'function') {
         window._refreshNavMirrorResults();
       }
@@ -785,8 +826,10 @@
       let importedAnyBible = false;
       let importedCount = 0;
       let skippedUnsupported = 0;
-      try {
-        for (const file of input.files) {
+      let hadImportError = false;
+      let hadBiblePersistError = false;
+      for (const file of input.files) {
+        try {
           const name = file.name.toLowerCase();
           const text = await file.text();
           if (name.endsWith('.xml')) {
@@ -829,7 +872,12 @@
             if (!activeBibleVersion || !bibles[activeBibleVersion]) {
               activeBibleVersion = verName;
             }
-            await idbPut(STORE_BIBLES, buildBibleRecord(verName, parsed, { isNew: true }));
+            try {
+              await idbPut(STORE_BIBLES, buildBibleRecord(verName, parsed, { isNew: true }));
+            } catch (e) {
+              hadBiblePersistError = true;
+              console.error('Bible import persist failed', e);
+            }
             importedAnyBible = true;
             importedCount += 1;
             renderVersionBar();
@@ -859,17 +907,21 @@
             skippedUnsupported += 1;
             continue;
           }
+        } catch (e) {
+          hadImportError = true;
+          console.error('Import failed for file', file && file.name ? file.name : '(unknown file)', e);
         }
-      } catch (e) {
-        console.error('Import failed', e);
-        showToast(t('import_failed'));
-        input.value = "";
-        return;
       }
       saveState();
       saveToStorageDebounced();
       if (importedAnyBible) {
         try { await flushAppState(); } catch (_) {}
+      }
+      if (hadBiblePersistError) {
+        showToast(t('bible_import_persist_failed'));
+      }
+      if (hadImportError) {
+        showToast(t('import_failed'));
       }
       if (skippedUnsupported > 0) {
         showToast(t('import_skipped_unsupported').replace('{count}', String(skippedUnsupported)));

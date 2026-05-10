@@ -51,6 +51,10 @@
       if (stateEl) stateEl.textContent = nextState;
       const errEl = document.getElementById('remote-show-last-error');
       if (errEl) errEl.textContent = remoteShowLastError || 'None';
+      if (typeof window.updateAiRelayDebugState === 'function') {
+        const suffix = reason ? ` (${reason})` : '';
+        window.updateAiRelayDebugState({ relay: `${nextState}${suffix}` });
+      }
     }
 
     function parsePort(value, fallback) {
@@ -67,8 +71,7 @@
 
     function getRelayPort() {
       const inputVal = document.getElementById('remote-show-relay-port')?.value;
-      const pagePort = window.location.port || '';
-      return parsePort(inputVal || pagePort, RELAY_DEFAULT_PORT);
+      return parsePort(inputVal, RELAY_DEFAULT_PORT);
     }
 
     function resolveNonLocalhostHostname() {
@@ -90,7 +93,64 @@
       const manualShareHost = String(document.getElementById('remote-show-host')?.value || '').trim();
       if (manualShareHost) return manualShareHost;
       if (remoteShowDetectedIp) return remoteShowDetectedIp;
-      return resolveNonLocalhostHostname();
+      const nonLocal = resolveNonLocalhostHostname();
+      if (nonLocal) return nonLocal;
+      if (typeof hasDesktopBridgeRuntime === 'function' && hasDesktopBridgeRuntime()) {
+        const desktopHost = String(localServerInfo?.preferredHost || '').trim();
+        return desktopHost || '127.0.0.1';
+      }
+	      if (typeof getHostMode === 'function' && typeof HOST_MODE_OBS !== 'undefined' && getHostMode() === HOST_MODE_OBS) {
+	        const obsHost = String(window.location.hostname || '').trim();
+	        return obsHost || '127.0.0.1';
+	      }
+	      if (window.location.protocol === 'file:') return '127.0.0.1';
+	      return '';
+	    }
+
+    function getRelayOverrideFromQuery() {
+      let relay = '';
+      let relayPort = '';
+      try {
+        const params = new URLSearchParams(window.location.search || '');
+        relay = String(params.get('relay') || '').trim();
+        relayPort = String(params.get('relayPort') || '').trim();
+      } catch (_) {
+        return { host: '', port: '' };
+      }
+
+      let host = '';
+      let port = '';
+
+      if (relay) {
+        try {
+          const parsed = new URL(relay);
+          if (parsed.protocol === 'ws:' || parsed.protocol === 'wss:') {
+            host = parsed.hostname || '';
+            port = parsed.port || '';
+          }
+        } catch (_) {}
+      }
+
+      if (!port && relayPort) {
+        const cleanPort = String(relayPort).replace(/[^0-9]/g, '');
+        if (cleanPort) port = cleanPort;
+      }
+
+      return { host: host.trim(), port: port.trim() };
+    }
+
+    function applyRelayOverrideFromQuery() {
+      const override = getRelayOverrideFromQuery();
+      if (!override.host && !override.port) return false;
+      if (override.host) {
+        const hostInput = document.getElementById('remote-show-relay-host');
+        if (hostInput) hostInput.value = override.host;
+      }
+      if (override.port) {
+        const portInput = document.getElementById('remote-show-relay-port');
+        if (portInput) portInput.value = override.port;
+      }
+      return true;
     }
 
     function openRemoteShowModal() {
@@ -423,13 +483,13 @@
         if (!raw.payload || typeof raw.payload !== 'object') return null;
         const pairCode = getRemoteShowPairCode();
         const token = normalizePairCode(raw.token || '');
+        // Keep relay interoperable across devices even when local stored pair codes differ.
+        // We still log mismatches for diagnostics, but do not hard-reject the payload.
         if (pairCode && token && pairCode !== token) {
-          remoteShowLog('envelope_rejected', 'Pair code mismatch');
-          return null;
+          remoteShowLog('envelope_pair_mismatch', `local=${pairCode} remote=${token}`);
         }
         if (raw.sessionId && raw.sessionId !== remoteShowSessionId) {
-          remoteShowLog('envelope_rejected', 'Session mismatch');
-          return null;
+          remoteShowLog('envelope_session_mismatch', `local=${remoteShowSessionId} remote=${raw.sessionId}`);
         }
         if (raw.senderId && raw.senderId === relayClientId) return null;
         payload = raw.payload;
@@ -500,9 +560,22 @@
       connectRelay();
     }
 
-    function connectRelay() {
+    function shouldKeepRelayConnected(opts = {}) {
+      const forcedByUrl = applyRelayOverrideFromQuery();
+      const forceConnect = !!opts.force;
       const enabled = document.getElementById('remote-show-toggle')?.checked;
-      if (!enabled) {
+      const obsDockAuto =
+        typeof getHostMode === 'function' &&
+        typeof HOST_MODE_OBS !== 'undefined' &&
+        getHostMode() === HOST_MODE_OBS &&
+        window.location.protocol !== 'file:';
+	      const desktopAuto = typeof hasDesktopBridgeRuntime === 'function' && hasDesktopBridgeRuntime();
+	      const localFileAuto = window.location.protocol === 'file:';
+	      return !!(enabled || forcedByUrl || forceConnect || obsDockAuto || desktopAuto || localFileAuto);
+	    }
+
+    function connectRelay(opts = {}) {
+      if (!shouldKeepRelayConnected(opts)) {
         disconnectRelay({ markIdle: true, reason: 'RemoteShow disabled' });
         return;
       }
@@ -554,6 +627,12 @@
         flushRelayStateQueue();
         startRemoteShowHeartbeat();
         relaySend({ type: 'HELLO', ts: Date.now() });
+        if (typeof window.bspReplayDisplaySyncState === 'function') {
+          window.bspReplayDisplaySyncState('relay open');
+          setTimeout(() => window.bspReplayDisplaySyncState && window.bspReplayDisplaySyncState('relay open follow-up'), 350);
+          setTimeout(() => window.bspReplayDisplaySyncState && window.bspReplayDisplaySyncState('relay open settle'), 1200);
+        }
+        if (typeof window.bspPublishAiMode === 'function') window.bspPublishAiMode();
       };
       relaySocket.onclose = () => {
         remoteShowLog('closed', relayUrl || 'relay');
@@ -561,7 +640,7 @@
           clearInterval(remoteShowHeartbeatTimer);
           remoteShowHeartbeatTimer = null;
         }
-        if (document.getElementById('remote-show-toggle')?.checked) {
+        if (shouldKeepRelayConnected()) {
           setRemoteShowConnectionState('degraded', 'Relay connection closed');
           scheduleRelayReconnect('Relay connection closed');
         } else {
@@ -677,4 +756,3 @@
       }
       window.prompt('RemoteShow URL', url);
     }
-

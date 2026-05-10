@@ -105,7 +105,7 @@
     }
 
     function initializePositionOffsetControls() {
-      ['lt-offset-x', 'lt-offset-y'].forEach((id) => {
+      ['lt-offset-x', 'lt-offset-y', 'full-offset-x', 'full-offset-y'].forEach((id) => {
         const input = document.getElementById(id);
         if (!input) return;
         if (!input.dataset.offsetBound) {

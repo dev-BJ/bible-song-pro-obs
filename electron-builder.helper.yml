@@ -1,0 +1,70 @@
+appId: com.biblesongpro.helper
+productName: BSP AI Helper
+
+# Entry point is the helper's main process
+# All files the helper needs bundled:
+#   - its own scripts
+#   - the panel/display HTML pages it serves over HTTP
+#   - the JS and asset trees those pages depend on
+#   - root package.json (electron-builder requirement + app metadata)
+files:
+  - helper-app/**/*
+  - Bible Song Pro panel.html
+  - BSP_display.html
+  - js/**/*
+  - css/**/*
+  - assets/**/*
+  - electron/resources/**/*
+  - package.json
+
+extraMetadata:
+  main: helper-app/main.js
+
+directories:
+  buildResources: electron/resources
+  output: dist-helper
+
+publish:
+  - provider: github
+    owner: Johnbatey
+    repo: bible-song-pro-obs
+
+mac:
+  category: public.app-category.productivity
+  icon: electron/resources/bsp-ai-helper-icon.icns
+  identity: null
+  hardenedRuntime: false
+  entitlements: electron/resources/helper.mac.entitlements
+  entitlementsInherit: electron/resources/helper.mac.entitlements
+  extendInfo:
+    NSMicrophoneUsageDescription: "BSP AI Helper needs microphone access to detect scripture references in real time."
+  target:
+    - dmg
+    - zip
+  artifactName: "${productName}-${version}-mac-${arch}.${ext}"
+
+dmg:
+  artifactName: "${productName} Installer-${version}-mac-${arch}.${ext}"
+
+win:
+  icon: electron/resources/bible-song-pro-icon.ico
+  publisherName: Johnson Olakotan
+  target:
+    - nsis
+    - portable
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: "${productName} Setup-${version}-win-${arch}.${ext}"
+
+portable:
+  artifactName: "${productName} Portable-${version}-win-${arch}.${ext}"
+
+linux:
+  icon: electron/resources/linux-icon.png
+  category: Utility
+  target:
+    - AppImage
+    - zip
+  artifactName: "${productName}-${version}-linux-${arch}.${ext}"

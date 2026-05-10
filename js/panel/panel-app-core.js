@@ -59,6 +59,8 @@
       'autoResizeFull',
       'autoResizeLT',
       'refPositionFull',
+      'fullOffsetX',
+      'fullOffsetY',
       'hAlignFullRef',
       'hAlignFull',
       'vAlignFull',
@@ -150,7 +152,7 @@
     let dbPromise = null;
     let appState = null;
     let projectionSettingsProfilesByTab = null;
-    let settingsTargetTab = 'follow';
+      let settingsTargetTab = 'bible';
     let setlistSettings = { ...DEFAULT_SETLIST_SETTINGS };
     let hostMode = HOST_MODE_OBS;
     let vmixState = {

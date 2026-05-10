@@ -1,0 +1,1867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Song Pro Ai Helper</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --panel: #101724;
+      --panel-2: #151f30;
+      --text: #e8eef8;
+      --muted: #9fb0cb;
+      --border: #26354d;
+      --accent: #3a7bdb;
+      --accent-hover: #4a8bf0;
+      --danger: #d33f52;
+      --danger-hover: #e04a5d;
+    }
+    body[data-theme="light"] {
+      --bg: #f2f6fd;
+      --panel: #ffffff;
+      --panel-2: #eef3fb;
+      --text: #26344c;
+      --muted: #5f728f;
+      --border: #c7d4e9;
+      --accent: #2f63b8;
+      --accent-hover: #3a72cc;
+      --danger: #c83a4d;
+      --danger-hover: #d64558;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    @media (max-width: 760px) {
+      header {
+        gap: 8px;
+        padding: 8px 10px;
+      }
+      .brand {
+        margin-right: 6px;
+      }
+      .brand-title .full {
+        display: none;
+      }
+      .brand-title .short {
+        display: inline;
+      }
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      margin-right: auto;
+    }
+    .brand-logo {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      object-fit: cover;
+    }
+    .brand-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .brand-title .full { display: inline; }
+    .brand-title .short { display: none; }
+    .connection-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+    }
+    .connection-status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #d33f52;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.25);
+    }
+    .connection-status .dot.on {
+      background: #22c55e;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 0 8px rgba(34,197,94,0.5);
+    }
+    .live-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      text-transform: uppercase;
+    }
+    .live-chip.on {
+      color: #0f2a1a;
+      background: rgba(52, 211, 153, 0.95);
+      border-color: rgba(52, 211, 153, 0.95);
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      background: rgba(255,255,255,0.03);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .status-chip.active {
+      color: #0f2a1a;
+      background: rgba(52, 211, 153, 0.95);
+      border-color: rgba(52, 211, 153, 0.95);
+    }
+    .theme-toggle {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .theme-toggle:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+    }
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .theme-toggle .icon-sun,
+    .theme-toggle .icon-moon {
+      display: none;
+    }
+    body[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+    body[data-theme="light"] .theme-toggle .icon-moon { display: block; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .content-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+    }
+    .row label {
+      color: var(--muted);
+      font-size: 11px;
+      min-width: 56px;
+      flex-shrink: 0;
+    }
+    .row.hidden { display: none; }
+    .mode-switch {
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--panel) 88%, #000 12%);
+    }
+    body[data-theme="light"] .mode-switch {
+      background: #eef3fb;
+      border-color: #c9d5ea;
+    }
+    .mode-switch button {
+      min-height: 30px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      box-shadow: none;
+      padding: 6px 8px;
+    }
+    .mode-switch button.active {
+      background: linear-gradient(165deg, #2f61b5, #254e92);
+      color: #eef5ff;
+      border-color: #4e74b0;
+    }
+    .mode-note {
+      color: var(--muted);
+      font-size: 10px;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+    select, input, button {
+      background: #1b212c;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-family: inherit;
+    }
+    body[data-theme="light"] select,
+    body[data-theme="light"] input,
+    body[data-theme="light"] button.ghost,
+    body[data-theme="light"] .theme-toggle {
+      background: #ffffff;
+      color: var(--text);
+      border-color: #c9d5ea;
+    }
+    select, input { flex: 1; min-width: 0; }
+    button {
+      background: var(--accent);
+      border-color: var(--accent);
+      cursor: pointer;
+      font-weight: 700;
+      padding: 7px 10px;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.stop { background: var(--danger); border-color: var(--danger); }
+    button.stop:hover { background: var(--danger-hover); }
+    button.ghost { background: transparent; color: var(--muted); border-color: var(--border); }
+    button.ghost:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    body[data-theme="light"] button.ghost:hover,
+    body[data-theme="light"] .theme-toggle:hover {
+      background: #edf2fb;
+      color: var(--text);
+    }
+    .controls {
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+      justify-content: center;
+    }
+    .controls button {
+      min-height: 40px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    }
+    .mobile-connect {
+      border: 1px solid color-mix(in srgb, var(--border) 72%, var(--accent) 28%);
+      border-radius: 16px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      background:
+        radial-gradient(140px 80px at 0% 0%, rgba(89, 145, 255, 0.18), transparent 70%),
+        linear-gradient(160deg, #111a2a, #0c1220);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    body[data-theme="light"] .mobile-connect {
+      background:
+        radial-gradient(170px 90px at 0% 0%, rgba(46, 99, 214, 0.14), transparent 72%),
+        linear-gradient(170deg, #f7faff, #edf2fb);
+      border-color: #c8d7ef;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.85);
+    }
+    .mobile-connect .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mobile-connect .chip-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+    .mobile-connect .title {
+      color: var(--text);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mobile-connect .title::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #60a5fa;
+      box-shadow: 0 0 10px rgba(96,165,250,0.75);
+      flex-shrink: 0;
+    }
+    .mobile-connect .meta {
+      color: var(--muted);
+      font-size: 11px;
+      word-break: break-all;
+      padding: 2px 2px 0;
+    }
+    .mobile-connect .url-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .mobile-connect .url-row input {
+      width: 100%;
+      font-size: 11px;
+      line-height: 1.35;
+      border-radius: 10px;
+      background: color-mix(in srgb, #0b1220 88%, var(--accent) 12%);
+      border-color: color-mix(in srgb, var(--border) 72%, var(--accent) 28%);
+    }
+    body[data-theme="light"] .mobile-connect .url-row input {
+      background: #ffffff;
+      border-color: #bfd0eb;
+    }
+    .mobile-connect .url-row .ghost {
+      border-radius: 10px;
+      min-width: 62px;
+      font-size: 11px;
+    }
+    .mobile-connect .targets {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid color-mix(in srgb, var(--border) 72%, var(--accent) 28%);
+      background: color-mix(in srgb, #0c1526 86%, var(--accent) 14%);
+    }
+    body[data-theme="light"] .mobile-connect .targets {
+      background: #f2f6fe;
+      border-color: #cad8ef;
+    }
+    .mobile-connect .targets button {
+      border-radius: 9px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mobile-connect .targets button:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.06);
+    }
+    body[data-theme="light"] .mobile-connect .targets button:hover {
+      background: rgba(47,79,130,0.1);
+    }
+    .mobile-connect .targets button.active {
+      background: linear-gradient(165deg, #2f61b5, #254e92);
+      color: #eef5ff;
+      border-color: #4e74b0;
+      box-shadow: 0 4px 12px rgba(20,50,100,0.35);
+    }
+    .mobile-connect .qr-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 150px;
+      border: 1px solid color-mix(in srgb, var(--border) 72%, var(--accent) 28%);
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 6px, rgba(255,255,255,0.01) 6px 12px);
+      overflow: hidden;
+      padding: 12px;
+    }
+    body[data-theme="light"] .mobile-connect .qr-wrap {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.95), rgba(245,249,255,0.95)),
+        repeating-linear-gradient(45deg, rgba(46,99,214,0.03) 0 6px, rgba(46,99,214,0.01) 6px 12px);
+      border-color: #cad8ef;
+    }
+    .mobile-connect .qr-wrap img {
+      width: 136px;
+      height: 136px;
+      object-fit: contain;
+      display: block;
+      border-radius: 8px;
+      background: #fff;
+      padding: 6px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    }
+    .mobile-connect .hint {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+      padding: 2px 2px 0;
+    }
+    .log {
+      flex: 1;
+      min-height: 120px;
+      overflow-y: auto;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+    }
+    .log .entry { margin-bottom: 4px; }
+    .log .entry .ts { color: var(--muted); margin-right: 6px; }
+    .log .entry .text { color: var(--text); }
+    .log .entry.scripture .text { color: var(--accent); font-weight: 600; }
+    .log .entry.error .text { color: var(--danger); }
+    .log .entry.info .text { color: var(--muted); font-style: italic; }
+    .footer {
+      padding: 10px 14px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      position: sticky;
+      bottom: 0;
+      z-index: 10;
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <img class="brand-logo" src="../electron/resources/bsp-ai-helper-icon.svg" alt="BSP AI Helper logo">
+      <h1 class="brand-title"><span class="full">Bible Song Pro Ai Helper</span><span class="short">BSP Helper</span></h1>
+    </div>
+    <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"></circle>
+        <path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"></path>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20 15.2A8.5 8.5 0 1 1 8.8 4 6.8 6.8 0 0 0 20 15.2z"></path>
+      </svg>
+      <span class="sr-only">Toggle theme</span>
+    </button>
+    <span class="live-chip" id="live-chip">OFFLINE</span>
+    <span class="connection-status"><span class="dot" id="ws-dot"></span><span id="ws-label">Disconnected</span></span>
+  </header>
+
+  <div class="content-wrap">
+  <div class="row">
+    <label>Engine</label>
+    <select id="engine-select">
+      <option value="stub">Stub (demo)</option>
+      <option value="deepgram">Deepgram</option>
+      <option value="local" selected>Local AI (Moonshine)</option>
+    </select>
+  </div>
+
+  <div class="row" id="input-mode-row">
+    <label>Input</label>
+    <div class="mode-switch">
+      <button id="input-mode-remote" type="button" class="active">This Device</button>
+      <button id="input-mode-desktop" type="button">Desktop App</button>
+    </div>
+    <span class="mode-note" id="input-mode-note">Local mic</span>
+  </div>
+
+  <div class="row hidden" id="apikey-row">
+    <label>API Key</label>
+    <input type="password" id="api-key" placeholder="Paste Deepgram API key" autocomplete="off">
+  </div>
+
+  <div class="row hidden" id="mic-row">
+    <label>Mic</label>
+    <select id="mic-select"><option value="">Default microphone</option></select>
+    <button class="ghost" id="refresh-mics" type="button" title="Refresh device list">↻</button>
+  </div>
+
+  <div class="row hidden" id="local-model-row">
+    <label>Model</label>
+    <select id="local-model-select">
+      <option value="onnx-community/moonshine-tiny-ONNX">Moonshine Tiny (50MB)</option>
+      <option value="onnx-community/moonshine-base-ONNX" selected>Moonshine Base (150MB · Recommended)</option>
+    </select>
+    <button id="local-model-download" type="button" class="ghost" style="white-space:nowrap;flex-shrink:0">Download</button>
+  </div>
+
+  <div class="row hidden" id="local-status-row" style="display:none;flex-direction:column;align-items:stretch;gap:6px">
+    <div id="local-model-status" style="color:var(--muted);font-size:11px;line-height:1.4">No local model loaded yet.</div>
+    <div id="local-model-progress" style="display:none;height:6px;border-radius:999px;background:rgba(128,128,128,0.15);overflow:hidden">
+      <div id="local-model-progress-fill" style="width:0;height:100%;background:var(--accent);transition:width .2s ease"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="start-btn">Start</button>
+    <button id="stop-btn" class="stop" disabled>Stop</button>
+    <button id="clear-btn" class="ghost">Clear</button>
+  </div>
+
+  <div class="mobile-connect">
+    <div class="title-row">
+      <div class="title">Remote Connect</div>
+      <div class="chip-group">
+        <span class="status-chip" id="remote-devices-chip">Devices: 0</span>
+        <span class="status-chip" id="remote-mic-chip">Remote Mic: Off</span>
+      </div>
+    </div>
+    <div class="meta" id="mobile-host">LAN host: detecting...</div>
+    <div class="url-row">
+      <input id="mobile-url" readonly value="">
+      <button type="button" class="ghost" id="mobile-copy">Copy</button>
+    </div>
+    <div class="targets">
+      <button type="button" id="mobile-target-control" class="active">Control</button>
+      <button type="button" id="mobile-target-display">Display</button>
+      <button type="button" id="mobile-target-remote">Helper Remote</button>
+    </div>
+    <div class="qr-wrap"><img id="mobile-qr" alt="Mobile connect QR"></div>
+    <div class="hint">Connect Mobile/Tablet/PC on the same Wi-Fi network. Scan this QR for mobile/tablet or copy URL for PC.</div>
+  </div>
+
+  <div class="log" id="log"></div>
+  </div>
+
+  <div class="footer">
+    <span id="engine-label">idle</span>
+    <span style="flex:1;text-align:center">Author: <a href="https://www.instagram.com/johnsonolakotan" target="_blank" rel="noreferrer">Johnson Olakotan</a></span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span id="helper-update-status" style="font-size:10px;color:var(--muted)">Updates: idle</span>
+      <button id="helper-update-check" class="ghost" type="button" style="padding:3px 7px">Check</button>
+      <button id="helper-update-download" class="ghost" type="button" style="padding:3px 7px;display:none">Download</button>
+      <button id="helper-update-install" class="ghost" type="button" style="padding:3px 7px;display:none">Install</button>
+    </div>
+    <span id="helper-update-notes" style="font-size:9px;color:var(--muted);padding:6px;background:rgba(255,255,255,0.05);border-radius:3px;max-width:200px;max-height:60px;overflow:auto;white-space:pre-wrap;word-break:break-word;display:none;line-height:1.3"></span>
+    <span id="relay-url">ws://127.0.0.1:5511</span>
+  </div>
+
+  <script src="./relay.js"></script>
+  <script src="./engine-stub.js"></script>
+  <script src="./engine-deepgram.js"></script>
+    <script src="./engine-local.js"></script>
+  <script>
+    const RelayClient = window.BSPRelayClient;
+    const StubEngine = window.BSPStubEngine;
+    const DeepgramEngine = window.BSPDeepgramEngine;
+      const LocalEngine = window.BSPLocalEngine;
+    const runtimeParams = new URLSearchParams(window.location.search);
+    function getRelayUrlFromLocation() {
+      const relay = runtimeParams.get('relay');
+      if (relay && /^wss?:\/\//i.test(relay)) return relay;
+      const host = String(runtimeParams.get('host') || window.location.hostname || '127.0.0.1').trim() || '127.0.0.1';
+      const relayPort = Number(runtimeParams.get('relayPort')) || 5511;
+      return `ws://${host}:${relayPort}`;
+    }
+    const REMOTE_CONTROL_MODE = runtimeParams.get('remoteControl') === '1' || !window.HelperBridge;
+    const RELAY_URL = getRelayUrlFromLocation();
+    const RELEASES_URL = 'https://github.com/Johnbatey/bible-song-pro-obs/releases/latest';
+    const STORAGE = {
+      engine:       'bsp-helper-engine',
+      apiKey:       'bsp-helper-deepgram-key',
+      micId:        'bsp-helper-mic-id',
+      theme:        'bsp-helper-theme',
+      localModelId: 'bsp-helper-local-model-id',
+      inputMode:    'bsp-helper-input-mode'
+    };
+
+    const els = {
+      wsDot: document.getElementById('ws-dot'),
+      wsLabel: document.getElementById('ws-label'),
+      themeToggle: document.getElementById('theme-toggle'),
+      liveChip: document.getElementById('live-chip'),
+      engineSelect: document.getElementById('engine-select'),
+      apikeyRow: document.getElementById('apikey-row'),
+      apiKey: document.getElementById('api-key'),
+      micRow: document.getElementById('mic-row'),
+      micSelect: document.getElementById('mic-select'),
+      refreshMics: document.getElementById('refresh-mics'),
+      startBtn: document.getElementById('start-btn'),
+      stopBtn: document.getElementById('stop-btn'),
+      clearBtn: document.getElementById('clear-btn'),
+      mobileHost: document.getElementById('mobile-host'),
+      mobileUrl: document.getElementById('mobile-url'),
+      mobileCopy: document.getElementById('mobile-copy'),
+      mobileQr: document.getElementById('mobile-qr'),
+      mobileTargetControl: document.getElementById('mobile-target-control'),
+      mobileTargetDisplay: document.getElementById('mobile-target-display'),
+      mobileTargetRemote: document.getElementById('mobile-target-remote'),
+      log: document.getElementById('log'),
+      engineLabel: document.getElementById('engine-label'),
+      localModelRow:      document.getElementById('local-model-row'),
+      localStatusRow:     document.getElementById('local-status-row'),
+      localModelSelect:   document.getElementById('local-model-select'),
+      localModelDownload: document.getElementById('local-model-download'),
+      localModelStatus:   document.getElementById('local-model-status'),
+      localModelProgress: document.getElementById('local-model-progress'),
+      localModelProgressFill: document.getElementById('local-model-progress-fill'),
+      inputModeRow: document.getElementById('input-mode-row'),
+      inputModeRemote: document.getElementById('input-mode-remote'),
+      inputModeDesktop: document.getElementById('input-mode-desktop'),
+      inputModeNote: document.getElementById('input-mode-note'),
+      remoteDevicesChip: document.getElementById('remote-devices-chip'),
+      remoteMicChip: document.getElementById('remote-mic-chip'),
+      updateStatus: document.getElementById('helper-update-status'),
+      updateNotes: document.getElementById('helper-update-notes'),
+      updateCheckBtn: document.getElementById('helper-update-check'),
+      updateDownloadBtn: document.getElementById('helper-update-download'),
+      updateInstallBtn: document.getElementById('helper-update-install')
+    };
+
+    function setHelperUpdateUi(payload) {
+      const state = String(payload && payload.state || 'idle');
+      const percent = payload && typeof payload.percent === 'number' ? Math.max(0, Math.min(100, payload.percent)) : null;
+      const version = payload && payload.version ? String(payload.version) : '';
+      const releaseNotes = payload && payload.releaseNotes ? String(payload.releaseNotes) : '';
+      if (els.updateStatus) {
+        if (state === 'checking') els.updateStatus.textContent = 'Updates: checking...';
+        else if (state === 'available') els.updateStatus.textContent = version ? `Updates: v${version} available` : 'Updates: available';
+        else if (state === 'downloading') els.updateStatus.textContent = `Updates: downloading ${Math.round(percent || 0)}%`;
+        else if (state === 'downloaded') els.updateStatus.textContent = version ? `Updates: v${version} ready to install` : 'Updates: ready to install';
+        else if (state === 'none') els.updateStatus.textContent = 'Updates: up to date';
+        else if (state === 'dev-mode') els.updateStatus.textContent = 'Updates: disabled in dev mode';
+        else if (state === 'error') els.updateStatus.textContent = `Updates: ${(payload && payload.message) ? String(payload.message) : 'error'}`;
+        else els.updateStatus.textContent = 'Updates: idle';
+      }
+      if (els.updateNotes) {
+        if (releaseNotes && (state === 'available' || state === 'downloaded')) {
+          els.updateNotes.style.display = '';
+          els.updateNotes.textContent = releaseNotes.substring(0, 200) + (releaseNotes.length > 200 ? '...' : '');
+        } else {
+          els.updateNotes.style.display = 'none';
+        }
+      }
+      if (els.updateDownloadBtn) {
+        els.updateDownloadBtn.style.display = state === 'available' ? '' : 'none';
+      }
+      if (els.updateInstallBtn) {
+        els.updateInstallBtn.style.display = state === 'downloaded' ? '' : 'none';
+      }
+    }
+
+    const relay = new RelayClient(RELAY_URL);
+    if (els.engineLabel) {
+      const relayLabel = document.getElementById('relay-url');
+      if (relayLabel) relayLabel.textContent = RELAY_URL;
+    }
+    let engine = null;
+    let running = false;
+    let lastScriptureRef = '';
+    let lastScriptureAt = 0;
+    let mobileTarget = 'control';
+    let mobileUrls = { control: '', display: '', remote: '' };
+    let themeMode = 'dark';
+    let suppressRemoteDispatch = false;
+    let lastMicInputs = [];
+    let inputMode = REMOTE_CONTROL_MODE ? 'remote' : 'desktop';
+    let aiDetectionMode = 'bible';
+    const remoteClientId = (() => {
+      const fallback = `helper-${Math.random().toString(36).slice(2, 10)}`;
+      try {
+        const key = 'bsp-helper-client-id';
+        const existing = localStorage.getItem(key);
+        if (existing) return existing;
+        localStorage.setItem(key, fallback);
+      } catch (_) {}
+      return fallback;
+    })();
+    const remotePresence = new Map();
+    let presenceTimer = 0;
+    let presencePruneTimer = 0;
+
+    function usesDesktopControlMode() {
+      return REMOTE_CONTROL_MODE && inputMode === 'desktop';
+    }
+
+    function updateInputModeUi() {
+      if (!REMOTE_CONTROL_MODE) {
+        if (els.inputModeRow) els.inputModeRow.style.display = 'none';
+        return;
+      }
+      if (els.inputModeRow) els.inputModeRow.style.display = 'flex';
+      if (els.inputModeRemote) els.inputModeRemote.classList.toggle('active', inputMode === 'remote');
+      if (els.inputModeDesktop) els.inputModeDesktop.classList.toggle('active', inputMode === 'desktop');
+      if (els.inputModeNote) {
+        els.inputModeNote.textContent = inputMode === 'desktop' ? 'Desktop mic' : 'Local mic';
+      }
+    }
+
+    function setInputMode(nextMode) {
+      if (!REMOTE_CONTROL_MODE) return;
+      inputMode = nextMode === 'desktop' ? 'desktop' : 'remote';
+      try { localStorage.setItem(STORAGE.inputMode, inputMode); } catch (_) {}
+      updateInputModeUi();
+      if (inputMode === 'desktop') {
+        suppressRemoteDispatch = true;
+        try {
+          els.apiKey.value = '';
+          renderMicOptions([], '');
+          els.micSelect.value = '';
+        } finally {
+          suppressRemoteDispatch = false;
+        }
+        // Force a deterministic desktop re-sync on every switch.
+        sendRemoteHelperControl('refreshMics');
+        sendRemoteHelperControl('requestState');
+        publishPresence('mode-desktop');
+      } else {
+        refreshMics();
+        publishHelperState('remoteInputMode');
+        publishPresence('mode-remote');
+      }
+    }
+
+    function updateRemotePresenceUi() {
+      const now = Date.now();
+      const active = Array.from(remotePresence.values()).filter((entry) => (now - entry.seenAt) <= 15000);
+      const connectedCount = active.length;
+      const micActive = active.some((entry) => !!entry.remoteMicActive);
+      if (els.remoteDevicesChip) {
+        els.remoteDevicesChip.textContent = `Devices: ${connectedCount}`;
+        els.remoteDevicesChip.classList.toggle('active', connectedCount > 0);
+      }
+      if (els.remoteMicChip) {
+        els.remoteMicChip.textContent = micActive ? 'Remote Mic: Active' : 'Remote Mic: Off';
+        els.remoteMicChip.classList.toggle('active', micActive);
+      }
+    }
+
+    function registerRemotePresence(msg) {
+      const presence = msg && msg.presence ? msg.presence : msg;
+      const clientId = String(presence && presence.clientId || '').trim();
+      if (!clientId) return;
+      remotePresence.set(clientId, {
+        seenAt: Date.now(),
+        remoteMicActive: !!(presence && presence.remoteMicActive)
+      });
+      updateRemotePresenceUi();
+    }
+
+    function pruneRemotePresence() {
+      const now = Date.now();
+      let changed = false;
+      remotePresence.forEach((entry, key) => {
+        if ((now - entry.seenAt) > 15000) {
+          remotePresence.delete(key);
+          changed = true;
+        }
+      });
+      if (changed) updateRemotePresenceUi();
+    }
+
+    function publishPresence(reason = 'heartbeat') {
+      if (!REMOTE_CONTROL_MODE) return;
+      relay.send({
+        type: 'ai:helper-presence',
+        ts: Date.now(),
+        sender: 'helper-remote-ui',
+        presence: {
+          clientId: remoteClientId,
+          reason,
+          inputMode,
+          remoteMicActive: inputMode === 'remote' && !!running
+        }
+      });
+    }
+
+    function startPresenceHeartbeat() {
+      if (!REMOTE_CONTROL_MODE) return;
+      if (presenceTimer) clearInterval(presenceTimer);
+      presenceTimer = setInterval(() => publishPresence('heartbeat'), 5000);
+      publishPresence('start');
+    }
+
+    const HELPER_BIBLE_BOOKS = [
+      'Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Joshua', 'Judges', 'Ruth',
+      '1 Samuel', '2 Samuel', '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra', 'Nehemiah',
+      'Esther', 'Job', 'Psalm', 'Psalms', 'Proverbs', 'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah',
+      'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos', 'Obadiah', 'Jonah', 'Micah',
+      'Nahum', 'Habakkuk', 'Zephaniah', 'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke', 'John',
+      'Acts', 'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians',
+      '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James',
+      '1 Peter', '2 Peter', '1 John', '2 John', '3 John', 'Jude', 'Revelation'
+    ];
+    const HELPER_BOOK_ALIAS_MAP = new Map();
+
+    function timestamp() { return new Date().toTimeString().slice(0, 8); }
+
+    function applyTheme(mode) {
+      themeMode = (mode === 'light') ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', themeMode);
+      if (els.themeToggle) els.themeToggle.setAttribute('aria-label', themeMode === 'light' ? 'Switch to dark mode' : 'Switch to light mode');
+      try { localStorage.setItem(STORAGE.theme, themeMode); } catch (_) {}
+    }
+
+    function toggleTheme() {
+      applyTheme(themeMode === 'light' ? 'dark' : 'light');
+    }
+
+    function setMobileTarget(next) {
+      mobileTarget = (next === 'display' || next === 'remote') ? next : 'control';
+      els.mobileTargetControl.classList.toggle('active', mobileTarget === 'control');
+      els.mobileTargetDisplay.classList.toggle('active', mobileTarget === 'display');
+      els.mobileTargetRemote.classList.toggle('active', mobileTarget === 'remote');
+      const url = mobileUrls[mobileTarget] || '';
+      els.mobileUrl.value = url;
+      const qrUrl = url ? `https://quickchart.io/qr?size=220&margin=1&text=${encodeURIComponent(url)}` : '';
+      if (qrUrl) {
+        els.mobileQr.src = qrUrl;
+      } else {
+        els.mobileQr.removeAttribute('src');
+      }
+    }
+
+    async function copyMobileUrl() {
+      const text = els.mobileUrl.value || '';
+      if (!text) return;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+          logEntry(`copied ${mobileTarget} URL`, 'info');
+          return;
+        }
+      } catch (_) {}
+      try {
+        els.mobileUrl.focus();
+        els.mobileUrl.select();
+        document.execCommand('copy');
+        logEntry(`copied ${mobileTarget} URL`, 'info');
+      } catch (_) {
+        logEntry('copy failed', 'error');
+      }
+    }
+
+    async function loadMobileConnectInfo() {
+      const bridge = window.HelperBridge;
+      if (!bridge || typeof bridge.getLocalServerInfo !== 'function') {
+        const host = window.location.hostname || '127.0.0.1';
+        const base = `http://${host}:5510`;
+        mobileUrls = {
+          control: `${base}/Bible%20Song%20Pro%20panel.html?hostMode=obs&relay=ws://${host}:5511`,
+          display: `${base}/BSP_display.html?hostMode=obs&relay=ws://${host}:5511`,
+          remote: `${base}/helper-app/index.html?remoteControl=1&relay=${encodeURIComponent(`ws://${host}:5511`)}`
+        };
+        els.mobileHost.textContent = `LAN host: ${host}`;
+        setMobileTarget(mobileTarget);
+        return;
+      }
+      try {
+        const info = await bridge.getLocalServerInfo();
+        const host = String(info?.preferredHost || '127.0.0.1');
+        const httpPort = Number(info?.httpPort || 5510);
+        const relayPort = Number(info?.relayPort || 5511);
+        const base = `http://${host}:${httpPort}`;
+        mobileUrls = {
+          control: `${base}/Bible%20Song%20Pro%20panel.html?hostMode=obs&relay=ws://${host}:${relayPort}`,
+          display: `${base}/BSP_display.html?hostMode=obs&relay=ws://${host}:${relayPort}`,
+          remote: `${base}/helper-app/index.html?remoteControl=1&relay=${encodeURIComponent(`ws://${host}:${relayPort}`)}`
+        };
+        els.mobileHost.textContent = `LAN host: ${host} (${(info?.availableHosts || []).join(', ')})`;
+      } catch (e) {
+        els.mobileHost.textContent = `LAN host: unavailable (${e && e.message ? e.message : 'error'})`;
+      }
+      setMobileTarget(mobileTarget);
+    }
+
+    function normalizeBookName(value) {
+      return String(value || '')
+        .toLowerCase()
+        .replace(/^first\s+/i, '1 ')
+        .replace(/^second\s+/i, '2 ')
+        .replace(/^third\s+/i, '3 ')
+        .replace(/[^a-z0-9 ]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function buildBookAliases() {
+      if (HELPER_BOOK_ALIAS_MAP.size) return HELPER_BOOK_ALIAS_MAP;
+      const push = (alias, canonical) => {
+        const key = normalizeBookName(alias);
+        if (key) HELPER_BOOK_ALIAS_MAP.set(key, canonical);
+      };
+      HELPER_BIBLE_BOOKS.forEach((book) => push(book, book));
+      [
+        ['gen', 'Genesis'], ['exo', 'Exodus'], ['ex', 'Exodus'], ['lev', 'Leviticus'], ['num', 'Numbers'],
+        ['deut', 'Deuteronomy'], ['detronome', 'Deuteronomy'], ['ditaronomy', 'Deuteronomy'], ['ditronomy', 'Deuteronomy'],
+        ['josh', 'Joshua'], ['judg', 'Judges'], ['psalm', 'Psalms'], ['ps', 'Psalms'],
+        ['salm', 'Psalms'], ['saam', 'Psalms'], ['prov', 'Proverbs'], ['eccl', 'Ecclesiastes'],
+        ['ecclesia sees', 'Ecclesiastes'], ['ectilestiasthesis', 'Ecclesiastes'], ['ecclessiastes', 'Ecclesiastes'],
+        ['song', 'Song of Solomon'], ['sos', 'Song of Solomon'], ['isa', 'Isaiah'], ['jer', 'Jeremiah'],
+        ['jerry maya', 'Jeremiah'], ['jerry mayaw', 'Jeremiah'], ['jerry mayer', 'Jeremiah'],
+        ['ezek', 'Ezekiel'], ['dan', 'Daniel'], ['hos', 'Hosea'], ['obad', 'Obadiah'], ['hab', 'Habakkuk'],
+        ['abaco', 'Habakkuk'], ['abacu', 'Habakkuk'], ['abacuk', 'Habakkuk'], ['ababkuk', 'Habakkuk'],
+        ['abraco', 'Habakkuk'], ['abracu', 'Habakkuk'], ['abracul', 'Habakkuk'],
+        ['abacouk', 'Habakkuk'], ['abacog', 'Habakkuk'], ['abacogue', 'Habakkuk'], ['abacuum', 'Habakkuk'],
+        ['ziphaniah', 'Zephaniah'], ['zi fania', 'Zephaniah'], ['ziffanai', 'Zephaniah'],
+        ['fill him on', 'Philemon'], ['file a month', 'Philemon'], ['philimon', 'Philemon'], ['fylemon', 'Philemon'], ['file him on', 'Philemon'],
+        ['zech', 'Zechariah'], ['mal', 'Malachi'], ['matt', 'Matthew'], ['mathew', 'Matthew'],
+        ['mathieu', 'Matthew'], ['matt s you', 'Matthew'], ['jhon', 'John'], ['lukee', 'Luke'], ['marke', 'Mark'],
+        ['routes', 'Ruth'], ['roots', 'Ruth'], ['root', 'Ruth'],
+        ['rev', 'Revelation'], ['revelations', 'Revelation'], ['romance', 'Romans'], ['corinthians', '1 Corinthians'],
+        ['thesalonians', '1 Thessalonians'], ['thessalonia', '1 Thessalonians'], ['tesalonia', '1 Thessalonians'],
+        ['1 corinthians', '1 Corinthians'], ['first corinthians', '1 Corinthians'],
+        ['2 corinthians', '2 Corinthians'], ['second corinthians', '2 Corinthians'],
+        ['1 thessalonians', '1 Thessalonians'], ['first thessalonians', '1 Thessalonians'],
+        ['2 thessalonians', '2 Thessalonians'], ['second thessalonians', '2 Thessalonians'],
+        ['1 timothy', '1 Timothy'], ['first timothy', '1 Timothy'], ['2 timothy', '2 Timothy'], ['second timothy', '2 Timothy'],
+        ['timoti', 'Timothy'],
+        ['1 peter', '1 Peter'], ['first peter', '1 Peter'], ['2 peter', '2 Peter'], ['second peter', '2 Peter'],
+        ['1 john', '1 John'], ['first john', '1 John'], ['2 john', '2 John'], ['second john', '2 John'],
+        ['3 john', '3 John'], ['third john', '3 John']
+      ].forEach(([alias, canonical]) => push(alias, canonical));
+      return HELPER_BOOK_ALIAS_MAP;
+    }
+
+    function buildPhoneticKey(value) {
+      return normalizeBookName(value)
+        .replace(/\bps(?=alm)/g, 's')
+        .replace(/\bph/g, 'f')
+        .replace(/\bkn/g, 'n')
+        .replace(/\bwr/g, 'r')
+        .replace(/kh/g, 'k')
+        .replace(/[aeiou]/g, '')
+        .replace(/(.)\1+/g, '$1')
+        .trim();
+    }
+
+    function getLevenshteinDistance(a, b) {
+      const left = String(a || '');
+      const right = String(b || '');
+      if (!left) return right.length;
+      if (!right) return left.length;
+      const rows = Array.from({ length: left.length + 1 }, () => new Array(right.length + 1).fill(0));
+      for (let i = 0; i <= left.length; i += 1) rows[i][0] = i;
+      for (let j = 0; j <= right.length; j += 1) rows[0][j] = j;
+      for (let i = 1; i <= left.length; i += 1) {
+        for (let j = 1; j <= right.length; j += 1) {
+          const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+          rows[i][j] = Math.min(
+            rows[i - 1][j] + 1,
+            rows[i][j - 1] + 1,
+            rows[i - 1][j - 1] + cost
+          );
+        }
+      }
+      return rows[left.length][right.length];
+    }
+
+    function findPhoneticBookMatch(raw) {
+      const phraseKey = buildPhoneticKey(raw);
+      if (!phraseKey) return '';
+      const aliases = buildBookAliases();
+      let bestCanonical = '';
+      let bestScore = -Infinity;
+      const seen = new Set();
+      for (const [aliasKey, canonical] of aliases.entries()) {
+        const marker = canonical + '|' + aliasKey;
+        if (seen.has(marker)) continue;
+        seen.add(marker);
+        const aliasPhonetic = buildPhoneticKey(aliasKey);
+        if (!aliasPhonetic) continue;
+        const distance = getLevenshteinDistance(phraseKey, aliasPhonetic);
+        const maxLen = Math.max(phraseKey.length, aliasPhonetic.length, 1);
+        let score = 1 - (distance / maxLen);
+        if (aliasPhonetic.startsWith(phraseKey) || phraseKey.startsWith(aliasPhonetic)) score += 0.12;
+        if (distance === 0) score += 0.2;
+        if (score > bestScore) {
+          bestScore = score;
+          bestCanonical = canonical;
+        }
+      }
+      return bestScore >= 0.58 ? bestCanonical : '';
+    }
+
+    function getNavigationCommand(text) {
+      const normalized = normalizeBookName(text);
+      if (!normalized) return '';
+      if (/(^|\s)next verse(\s|$)/.test(normalized)) return 'next';
+      if (/(^|\s)(?:previous|prev) verse(\s|$)/.test(normalized)) return 'previous';
+      if (/(^|\s)last verse(\s|$)/.test(normalized)) return 'last';
+      if (/(^|\s)first verse(\s|$)/.test(normalized)) return 'first';
+      return '';
+    }
+
+    function isNumberOnlyPhrase(raw) {
+      const tokenSynonyms = {
+        won: 'one', wan: 'one', on: 'one',
+        to: 'two', too: 'two', tu: 'two',
+        seek: 'six', seeks: 'six',
+        fight: 'five', fights: 'five',
+        ate: 'eight', eights: 'eight', eighth: 'eight', eigth: 'eight'
+      };
+      const units = new Set([
+        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+        'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
+        'seventeen', 'eighteen', 'nineteen'
+      ]);
+      const tens = new Set(['twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']);
+      const tokens = String(raw || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\- ]+/g, ' ')
+        .replace(/-/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((token) => tokenSynonyms[token] || token);
+      if (!tokens.length) return false;
+      return tokens.every((token) => {
+        if (/^\d+$/.test(token)) return true;
+        if (units.has(token) || tens.has(token) || token === 'hundred') return true;
+        return token === 'and' || token === 'the' || token === 'verse' || token === 'chapter';
+      });
+    }
+
+    function resolveBookName(raw) {
+      const needle = normalizeBookName(raw);
+      if (!needle) return '';
+      if (isNumberOnlyPhrase(needle)) return '';
+      const variants = [];
+      const pushVariant = (value) => {
+        const normalized = normalizeBookName(value);
+        if (!normalized || variants.includes(normalized) || isNumberOnlyPhrase(normalized)) return;
+        variants.push(normalized);
+      };
+      pushVariant(needle);
+      const needleWords = needle.split(' ').filter(Boolean);
+      for (let i = 0; i < needleWords.length; i += 1) {
+        const suffix = needleWords.slice(i).join(' ');
+        pushVariant(suffix);
+        if (suffix.startsWith('book of ')) pushVariant(suffix.slice('book of '.length));
+      }
+      const aliases = buildBookAliases();
+      for (const candidate of variants) {
+        const aliasHit = aliases.get(candidate);
+        if (aliasHit) return aliasHit;
+        const direct = HELPER_BIBLE_BOOKS.find((book) => normalizeBookName(book) === candidate)
+          || HELPER_BIBLE_BOOKS.find((book) => normalizeBookName(book).startsWith(candidate))
+          || HELPER_BIBLE_BOOKS.find((book) => candidate.startsWith(normalizeBookName(book)));
+        if (direct) return direct;
+        if (candidate.length >= 3) {
+          const phonetic = findPhoneticBookMatch(candidate);
+          if (phonetic) return phonetic;
+        }
+      }
+      return '';
+    }
+
+    function parseSpokenNumber(raw) {
+      const text = String(raw || '').trim().toLowerCase();
+      if (!text) return NaN;
+      if (/^\d+$/.test(text)) return Number(text);
+      const units = {
+        zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+        ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
+        seventeen: 17, eighteen: 18, nineteen: 19
+      };
+      const tens = {
+        twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90
+      };
+      const tokenSynonyms = {
+        won: 'one', wan: 'one', on: 'one',
+        to: 'two', too: 'two', tu: 'two',
+        seek: 'six', seeks: 'six',
+        fight: 'five', fights: 'five',
+        ate: 'eight', eights: 'eight', eighth: 'eight', eigth: 'eight'
+      };
+      const tokens = text
+        .replace(/[^a-z0-9\- ]+/g, ' ')
+        .replace(/-/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((token) => tokenSynonyms[token] || token);
+      if (!tokens.length) return NaN;
+      let value = 0;
+      let current = 0;
+      let consumedNumberToken = false;
+      for (const token of tokens) {
+        if (token === 'and' || token === 'the' || token === 'verse' || token === 'chapter') continue;
+        if (Object.prototype.hasOwnProperty.call(units, token)) {
+          current += units[token];
+          consumedNumberToken = true;
+          continue;
+        }
+        if (Object.prototype.hasOwnProperty.call(tens, token)) {
+          current += tens[token];
+          consumedNumberToken = true;
+          continue;
+        }
+        if (token === 'hundred') {
+          current = (current || 1) * 100;
+          consumedNumberToken = true;
+          continue;
+        }
+        return NaN;
+      }
+      if (!consumedNumberToken) return NaN;
+      value += current;
+      return Number.isFinite(value) ? value : NaN;
+    }
+
+    function buildNumericPhraseSignature(raw) {
+      const tokenSynonyms = {
+        won: 'one', wan: 'one', on: 'one',
+        to: 'two', too: 'two', tu: 'two',
+        seek: 'six', seeks: 'six',
+        fight: 'five', fights: 'five',
+        ate: 'eight', eights: 'eight'
+      };
+      const allowedWords = new Set([
+        'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine',
+        'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen',
+        'seventeen', 'eighteen', 'nineteen', 'twenty', 'thirty', 'forty', 'fifty',
+        'sixty', 'seventy', 'eighty', 'ninety', 'hundred'
+      ]);
+      const tokens = String(raw || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\- ]+/g, ' ')
+        .replace(/-/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((token) => tokenSynonyms[token] || token)
+        .filter((token) => token !== 'and' && token !== 'the' && token !== 'verse' && token !== 'chapter');
+      if (!tokens.length) return '';
+      if (!tokens.every((token) => /^\d+$/.test(token) || allowedWords.has(token))) return '';
+      return tokens.join(' ');
+    }
+
+    function numberToSpokenWords(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number) || number < 0) return '';
+      const units = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+      const teens = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+      const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+      if (number < 10) return units[number];
+      if (number < 20) return teens[number - 10];
+      if (number < 100) {
+        const ten = Math.floor(number / 10);
+        const unit = number % 10;
+        return unit ? `${tens[ten]} ${units[unit]}` : tens[ten];
+      }
+      if (number < 1000) {
+        const hundred = Math.floor(number / 100);
+        const rest = number % 100;
+        return rest ? `${units[hundred]} hundred ${numberToSpokenWords(rest)}` : `${units[hundred]} hundred`;
+      }
+      return String(number);
+    }
+
+    function buildRefTailSignatures(ref) {
+      const match = String(ref || '').match(/(?:\s|^)(\d+)(?::(\d+))$/);
+      if (!match) return [];
+      const signatures = new Set();
+      const chapter = Number(match[1]);
+      const verse = match[2] ? Number(match[2]) : NaN;
+      signatures.add(String(match[1]));
+      const chapterWords = numberToSpokenWords(chapter);
+      if (chapterWords) signatures.add(chapterWords);
+      if (Number.isFinite(verse)) {
+        signatures.add(`${match[1]} ${match[2]}`);
+        signatures.add(String(match[2]));
+        const verseWords = numberToSpokenWords(verse);
+        if (chapterWords && verseWords) signatures.add(`${chapterWords} ${verseWords}`);
+        if (verseWords) signatures.add(verseWords);
+      }
+      return Array.from(signatures);
+    }
+
+    function shouldSuppressTranscriptEcho(text, isFinal) {
+      if (!isFinal || !lastScriptureRef || !lastScriptureAt) return false;
+      if ((Date.now() - lastScriptureAt) > 2500) return false;
+      const textSig = buildNumericPhraseSignature(text);
+      const refSigs = buildRefTailSignatures(lastScriptureRef);
+      if (!textSig || !refSigs.length) return false;
+      return refSigs.includes(textSig);
+    }
+
+    function extractScriptureRef(text) {
+      const normalized = String(text || '')
+        .replace(/([A-Za-z])\s*-\s*([A-Za-z])/g, '$1 $2')
+        .replace(/\bvasthen\b/gi, 'verse ten')
+        .replace(/\b(verstain|bastain|basten)\b/gi, 'verse ten')
+        .replace(/\b(v[ae]s+t?s?|vess|ves)\b/gi, 'verse')
+        .replace(/\bversus\b/gi, 'verse')
+        .replace(/\b(?:and\s+)?that'?s\s+([A-Za-z0-9\- ]+)$/i, ' verse $1')
+        .replace(/[()\[\],;!?.]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (!normalized) return '';
+
+      const numericMatch = normalized.match(/([1-3]?\s*[A-Za-z]+(?:\s+[A-Za-z]+){0,4})\s+(\d{1,3})\s*[:.\-]\s*(\d{1,3})/);
+      if (numericMatch) {
+        const book = resolveBookName(numericMatch[1]);
+        const chapter = Number(numericMatch[2]);
+        const verse = Number(numericMatch[3]);
+        if (book && chapter >= 1 && verse >= 1) return `${book} ${chapter}:${verse}`;
+      }
+
+      const spokenMatch = normalized.match(/([1-3]?\s*[A-Za-z]+(?:\s+[A-Za-z]+){0,4})\s+chapter\s+([A-Za-z0-9\- ]+?)\s+verse\s+([A-Za-z0-9\- ]+)/i);
+      if (spokenMatch) {
+        const book = resolveBookName(spokenMatch[1]);
+        const chapter = parseSpokenNumber(spokenMatch[2]);
+        const verse = parseSpokenNumber(spokenMatch[3]);
+        if (book && Number.isFinite(chapter) && Number.isFinite(verse) && chapter >= 1 && verse >= 1) {
+          return `${book} ${chapter}:${verse}`;
+        }
+      }
+
+      const altMatch = normalized.match(/([1-3]?\s*[A-Za-z]+(?:\s+[A-Za-z]+){0,4})\s+(\d{1,3})\s+verse\s+(\d{1,3})/i);
+      if (altMatch) {
+        const book = resolveBookName(altMatch[1]);
+        const chapter = Number(altMatch[2]);
+        const verse = Number(altMatch[3]);
+        if (book && chapter >= 1 && verse >= 1) return `${book} ${chapter}:${verse}`;
+      }
+
+      const spokenCompact = normalized.match(/([1-3]?\s*[A-Za-z]+(?:\s+[A-Za-z]+){0,4})\s+([A-Za-z0-9\- ]+?)\s+([A-Za-z0-9\- ]+)$/i);
+      if (spokenCompact) {
+        const book = resolveBookName(spokenCompact[1]);
+        const chapter = parseSpokenNumber(spokenCompact[2]);
+        const verse = parseSpokenNumber(spokenCompact[3]);
+        if (book && Number.isFinite(chapter) && Number.isFinite(verse) && chapter >= 1 && verse >= 1) {
+          return `${book} ${chapter}:${verse}`;
+        }
+      }
+
+      const chapterOnlySpoken = normalized.match(/([1-3]?\s*[A-Za-z]+(?:\s+[A-Za-z]+){0,4})\s+([A-Za-z0-9\-]+)$/i);
+      if (chapterOnlySpoken && !/\bverse\b/i.test(normalized)) {
+        const book = resolveBookName(chapterOnlySpoken[1]);
+        const chapter = parseSpokenNumber(chapterOnlySpoken[2]);
+        if (book && Number.isFinite(chapter) && chapter >= 1) return `${book} ${chapter}`;
+      }
+
+      return '';
+    }
+
+    function maybeEmitScripture(text, kind) {
+      if (aiDetectionMode === 'song') return;
+      const nav = getNavigationCommand(text);
+      if (nav) {
+        logEntry(`scripture nav: ${nav}`, 'scripture');
+        relay.send({ type: 'ai:scripture-nav', command: nav, engine: kind, ts: Date.now() });
+      }
+      const ref = extractScriptureRef(text);
+      if (!ref) return;
+      const now = Date.now();
+      if (ref === lastScriptureRef && (now - lastScriptureAt) < 6000) return;
+      lastScriptureRef = ref;
+      lastScriptureAt = now;
+      logEntry(`scripture: ${ref}`, 'scripture');
+      relay.send({ type: 'ai:scripture', ref, candidates: [{ ref }], engine: kind, ts: now });
+    }
+
+    function logEntry(text, kind = '') {
+      const node = document.createElement('div');
+      node.className = 'entry' + (kind ? ' ' + kind : '');
+      node.innerHTML = '<span class="ts"></span><span class="text"></span>';
+      node.querySelector('.ts').textContent = timestamp();
+      node.querySelector('.text').textContent = text;
+      els.log.appendChild(node);
+      els.log.scrollTop = els.log.scrollHeight;
+      while (els.log.children.length > 200) els.log.removeChild(els.log.firstChild);
+    }
+
+    function setRunningUi(value) {
+      running = !!value;
+      els.startBtn.disabled = running;
+      els.stopBtn.disabled = !running;
+      els.engineLabel.textContent = running ? `running (${engine?.name || '?'})` : 'idle';
+      if (els.liveChip) {
+        els.liveChip.textContent = running ? 'LIVE' : 'OFFLINE';
+        els.liveChip.classList.toggle('on', running);
+      }
+    }
+
+    function sendRemoteControl(type) {
+      const ok = relay.send({ type, ts: Date.now(), sender: 'helper-remote-ui' });
+      if (!ok) logEntry(`relay send failed: ${type}`, 'error');
+      else logEntry(`remote: ${type}`, 'info');
+      return ok;
+    }
+
+    function sendRemoteHelperControl(action, extra = {}) {
+      const payload = { type: 'ai:helper-control', action, ts: Date.now(), sender: 'helper-remote-ui', ...extra };
+      const ok = relay.send(payload);
+      if (!ok) logEntry(`relay send failed: ${action}`, 'error');
+      return ok;
+    }
+
+    function renderMicOptions(inputs, selectedId = '') {
+      const safeInputs = Array.isArray(inputs) ? inputs : [];
+      els.micSelect.innerHTML = '<option value="">Default microphone</option>' +
+        safeInputs.map((d) => {
+          const id = String(d && d.id || '');
+          const label = String(d && d.label || (id ? `Mic ${id.slice(0, 6)}` : 'Microphone'));
+          return `<option value="${id.replace(/"/g, '&quot;')}">${label.replace(/</g, '&lt;')}</option>`;
+        }).join('');
+      if (selectedId && safeInputs.some((d) => String(d && d.id || '') === selectedId)) {
+        els.micSelect.value = selectedId;
+      }
+    }
+
+    function publishHelperState(reason = '') {
+      if (usesDesktopControlMode()) return;
+      relay.send({
+        type: 'ai:helper-state',
+        ts: Date.now(),
+        sender: REMOTE_CONTROL_MODE ? 'helper-remote-ui' : 'helper-desktop-ui',
+        reason,
+        state: {
+          running: !!running,
+          engine: String(els.engineSelect.value || ''),
+          theme: themeMode,
+          relayUrl: RELAY_URL,
+          apiKey: String(els.apiKey.value || ''),
+          micId: String(els.micSelect.value || ''),
+          mics: lastMicInputs.slice(0, 64),
+          micMode: REMOTE_CONTROL_MODE ? 'remote' : 'desktop'
+        }
+      });
+    }
+
+    function applyIncomingHelperState(msg) {
+      const state = msg && msg.state ? msg.state : {};
+      const incomingMode = String(state.micMode || 'desktop');
+      // Desktop instance must remain authoritative for desktop API/mic details.
+      // Ignore remote-device state snapshots so mode toggles can always recover
+      // the real desktop values when switching back to Desktop App mode.
+      if (!REMOTE_CONTROL_MODE && incomingMode === 'remote') return;
+      // In This Device mode on remote clients, ignore desktop snapshots so
+      // remote-specific engine/api/mic choices are not clobbered.
+      if (REMOTE_CONTROL_MODE && !usesDesktopControlMode() && incomingMode !== 'remote') return;
+      const allowInputFieldSync = !REMOTE_CONTROL_MODE || usesDesktopControlMode() || incomingMode === 'remote';
+      suppressRemoteDispatch = true;
+      try {
+        if ((state.theme === 'light' || state.theme === 'dark') && state.theme !== themeMode) {
+          applyTheme(state.theme);
+        }
+        const incomingEngine = String(state.engine || '').trim();
+        if (incomingEngine) {
+          const opt = els.engineSelect.querySelector(`option[value="${incomingEngine}"]`);
+          if (opt && !opt.disabled && els.engineSelect.value !== incomingEngine) {
+            els.engineSelect.value = incomingEngine;
+            refreshEngineRows();
+          }
+        }
+        if (allowInputFieldSync && Array.isArray(state.mics)) {
+          const normalizedMics = state.mics.map((d) => ({
+            id: String(d && d.id || ''),
+            label: String(d && d.label || '')
+          })).filter((d) => d.id);
+          lastMicInputs = normalizedMics;
+          renderMicOptions(normalizedMics, String(state.micId || ''));
+        } else if (allowInputFieldSync && typeof state.micId === 'string') {
+          els.micSelect.value = state.micId;
+        }
+        if (allowInputFieldSync && typeof state.apiKey === 'string' && els.apiKey.value !== state.apiKey) {
+          els.apiKey.value = state.apiKey;
+        }
+        if (typeof state.running === 'boolean') {
+          setRunningUi(state.running);
+          const activeEngine = String(state.engine || els.engineSelect.value || '?');
+          els.engineLabel.textContent = state.running ? `running (${activeEngine})` : `idle (${activeEngine})`;
+        }
+      } finally {
+        suppressRemoteDispatch = false;
+      }
+    }
+
+    async function handleHelperControlMessage(msg) {
+      if (REMOTE_CONTROL_MODE) return;
+      const action = String(msg && msg.action || '').trim();
+      if (!action) return;
+      if (action === 'requestState') {
+        await refreshMics();
+        publishHelperState('requestState');
+        return;
+      }
+      if (action === 'setEngine') {
+        const value = String(msg && msg.value || '').trim();
+        const opt = els.engineSelect.querySelector(`option[value="${value}"]`);
+        if (!opt || opt.disabled) return;
+        if (els.engineSelect.value !== value) {
+          els.engineSelect.value = value;
+          try { localStorage.setItem(STORAGE.engine, value); } catch (_) {}
+          refreshEngineRows();
+          logEntry(`remote: engine -> ${value}`, 'info');
+        }
+        publishHelperState('setEngine');
+        return;
+      }
+      if (action === 'setTheme') {
+        const value = String(msg && msg.value || '').trim();
+        if (value === 'light' || value === 'dark') {
+          applyTheme(value);
+          publishHelperState('setTheme');
+        }
+        return;
+      }
+      if (action === 'setApiKey') {
+        const value = String(msg && msg.value || '');
+        els.apiKey.value = value;
+        try { localStorage.setItem(STORAGE.apiKey, value); } catch (_) {}
+        publishHelperState('setApiKey');
+        return;
+      }
+      if (action === 'setMicId') {
+        const value = String(msg && msg.value || '');
+        els.micSelect.value = value;
+        try { localStorage.setItem(STORAGE.micId, value); } catch (_) {}
+        publishHelperState('setMicId');
+        return;
+      }
+      if (action === 'refreshMics') {
+        await refreshMics();
+        publishHelperState('refreshMics');
+        return;
+      }
+      if (action === 'clearLog') {
+        els.log.innerHTML = '';
+        publishHelperState('clearLog');
+      }
+    }
+
+    // ---- Settings persistence ----------------------------------
+    try {
+      const savedEngine = localStorage.getItem(STORAGE.engine);
+      if (savedEngine) {
+        const opt = els.engineSelect.querySelector(`option[value="${savedEngine}"]`);
+        if (opt && !opt.disabled) els.engineSelect.value = savedEngine;
+      }
+      const savedKey = localStorage.getItem(STORAGE.apiKey);
+      if (savedKey) els.apiKey.value = savedKey;
+      const savedTheme = localStorage.getItem(STORAGE.theme);
+      if (savedTheme) themeMode = savedTheme;
+      const savedModel = localStorage.getItem(STORAGE.localModelId);
+      if (savedModel && els.localModelSelect.querySelector(`option[value="${savedModel}"]`)) {
+        els.localModelSelect.value = savedModel;
+      }
+      if (REMOTE_CONTROL_MODE) {
+        const savedInputMode = localStorage.getItem(STORAGE.inputMode);
+        if (savedInputMode === 'desktop' || savedInputMode === 'remote') inputMode = savedInputMode;
+      }
+    } catch (_) {}
+    updateInputModeUi();
+    applyTheme(themeMode);
+    els.themeToggle.addEventListener('click', () => {
+      if (usesDesktopControlMode()) {
+        const nextTheme = themeMode === 'light' ? 'dark' : 'light';
+        applyTheme(nextTheme);
+        sendRemoteHelperControl('setTheme', { value: nextTheme });
+      } else {
+        toggleTheme();
+        publishHelperState('themeToggle');
+      }
+    });
+
+    function refreshEngineRows() {
+      const kind    = els.engineSelect.value;
+      const showMic = kind === 'deepgram' || kind === 'local';
+      const showKey = kind === 'deepgram' || (REMOTE_CONTROL_MODE && !usesDesktopControlMode());
+      const isLocal = kind === 'local';
+      const desktopProxy = usesDesktopControlMode();
+      els.apikeyRow.classList.toggle('hidden', !showKey);
+      els.micRow.classList.toggle('hidden', !showMic);
+      els.localModelRow.classList.toggle('hidden', !isLocal || desktopProxy);
+      // status row uses inline display:none so we manage it directly
+      els.localStatusRow.style.display = (isLocal && !desktopProxy) ? 'flex' : 'none';
+      if (desktopProxy) {
+        els.localModelDownload.disabled = true;
+        els.localModelDownload.textContent = 'Desktop Managed';
+      } else {
+        els.localModelDownload.disabled = false;
+        if (!isLocal) els.localModelDownload.textContent = 'Download Model';
+      }
+      if (isLocal) {
+        if (desktopProxy) {
+          els.localModelStatus.textContent = 'Managed by desktop helper in Desktop App mode.';
+          els.localModelStatus.style.color = 'var(--muted)';
+          els.localModelProgress.style.display = 'none';
+        } else {
+          const st = window.bspHelperLocalModelState ? window.bspHelperLocalModelState() : { state: 'idle' };
+          updateLocalModelUi(st.state, 0, '');
+        }
+      }
+    }
+
+    function updateLocalModelUi(state, progress, message) {
+      const stateLabels = {
+        idle:        'No local model loaded yet.',
+        downloading: 'Downloading… ' + Math.max(0, Math.min(100, Math.round(progress || 0))) + '%',
+        loading:     message || 'Initializing model…',
+        ready:       'Model ready ✓',
+        error:       message || 'Could not load model.'
+      };
+      els.localModelStatus.textContent = stateLabels[state] || stateLabels.idle;
+      els.localModelStatus.style.color = state === 'ready'
+        ? 'var(--success)'
+        : state === 'error'
+          ? 'var(--danger)'
+          : 'var(--muted)';
+      const showBar = state === 'downloading' || state === 'loading';
+      els.localModelProgress.style.display = showBar ? 'block' : 'none';
+      const pct = state === 'loading' ? 100 : Math.max(0, Math.min(100, Math.round(progress || 0)));
+      els.localModelProgressFill.style.width  = pct + '%';
+      els.localModelProgressFill.style.opacity = state === 'loading' ? '0.6' : '1';
+      const downloading = state === 'downloading' || state === 'loading';
+      if (state === 'ready') {
+        els.localModelDownload.textContent = 'Model Ready';
+        els.localModelDownload.disabled    = false;
+      } else if (downloading) {
+        els.localModelDownload.textContent = 'Downloading…';
+        els.localModelDownload.disabled    = true;
+      } else if (state === 'error') {
+        els.localModelDownload.textContent = 'Retry Download';
+        els.localModelDownload.disabled    = false;
+      } else {
+        els.localModelDownload.textContent = 'Download Model';
+        els.localModelDownload.disabled    = false;
+      }
+    }
+    els.engineSelect.addEventListener('change', () => {
+      if (usesDesktopControlMode() && !suppressRemoteDispatch) {
+        sendRemoteHelperControl('setEngine', { value: els.engineSelect.value });
+      }
+      try { localStorage.setItem(STORAGE.engine, els.engineSelect.value); } catch (_) {}
+      refreshEngineRows();
+      if (!usesDesktopControlMode()) publishHelperState('engineChange');
+    });
+        els.localModelSelect.addEventListener('change', () => {
+          try { localStorage.setItem(STORAGE.localModelId, els.localModelSelect.value); } catch (_) {}
+          // If model changes, reset status since the new model may not be loaded
+          const st = window.bspHelperLocalModelState ? window.bspHelperLocalModelState() : { state: 'idle', loadedModelId: '' };
+          if (st.loadedModelId && st.loadedModelId !== els.localModelSelect.value) {
+            updateLocalModelUi('idle', 0, '');
+          } else {
+            updateLocalModelUi(st.state, 0, '');
+          }
+        });
+
+        els.localModelDownload.addEventListener('click', async () => {
+          if (usesDesktopControlMode()) {
+            logEntry('local model is managed by desktop helper in Desktop App mode', 'info');
+            return;
+          }
+          const modelId = els.localModelSelect.value;
+          const onState = ({ state, progress, message }) => updateLocalModelUi(state, progress, message);
+          updateLocalModelUi('downloading', 0, 'Starting model download…');
+          try {
+            await window.bspHelperDownloadLocalModel(modelId, onState);
+          } catch (e) {
+            updateLocalModelUi('error', 0, e && e.message ? e.message : 'Download failed');
+            logEntry(`model download failed: ${e && e.message ? e.message : e}`, 'error');
+          }
+        });
+    els.apiKey.addEventListener('input', () => {
+      if (usesDesktopControlMode() && !suppressRemoteDispatch) {
+        sendRemoteHelperControl('setApiKey', { value: els.apiKey.value });
+      }
+      try { localStorage.setItem(STORAGE.apiKey, els.apiKey.value); } catch (_) {}
+      if (!usesDesktopControlMode()) publishHelperState('apiKeyInput');
+    });
+    els.micSelect.addEventListener('change', () => {
+      if (usesDesktopControlMode() && !suppressRemoteDispatch) {
+        sendRemoteHelperControl('setMicId', { value: els.micSelect.value });
+      }
+      try { localStorage.setItem(STORAGE.micId, els.micSelect.value); } catch (_) {}
+      if (!usesDesktopControlMode()) publishHelperState('micChange');
+    });
+    if (els.inputModeRemote) els.inputModeRemote.addEventListener('click', () => setInputMode('remote'));
+    if (els.inputModeDesktop) els.inputModeDesktop.addEventListener('click', () => setInputMode('desktop'));
+    refreshEngineRows();
+
+    // ---- Mic device enumeration --------------------------------
+    async function refreshMics() {
+      if (usesDesktopControlMode()) {
+        sendRemoteHelperControl('refreshMics');
+        return;
+      }
+      if (!navigator.mediaDevices?.enumerateDevices) return;
+      try {
+        // Need a permission prompt before labels are visible.
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true }).catch(() => null);
+        if (stream) stream.getTracks().forEach(t => t.stop());
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const inputs = devices.filter(d => d.kind === 'audioinput');
+        lastMicInputs = inputs.map((d) => ({
+          id: String(d.deviceId || ''),
+          label: String(d.label || `Mic ${String(d.deviceId || '').slice(0, 6)}`)
+        })).filter((d) => d.id);
+        const saved = (() => { try { return localStorage.getItem(STORAGE.micId) || ''; } catch (_) { return ''; } })();
+        renderMicOptions(lastMicInputs, saved);
+        if (saved && inputs.some(d => d.deviceId === saved)) els.micSelect.value = saved;
+        publishHelperState('micsRefreshed');
+      } catch (e) {
+        logEntry(`mic enumerate failed: ${e.message || e}`, 'error');
+      }
+    }
+    els.refreshMics.addEventListener('click', refreshMics);
+    refreshMics();
+
+    // ---- Engine factory ----------------------------------------
+    function buildEngine(kind) {
+      const onTranscript = ({ text, isFinal }) => {
+        if (shouldSuppressTranscriptEcho(text, isFinal)) return;
+        logEntry(text);
+        relay.send({ type: 'ai:transcript', text, isFinal: !!isFinal, engine: kind });
+        if (isFinal) maybeEmitScripture(text, kind);
+      };
+      const onStatus = ({ running, engine: name, error, message }) => {
+        setRunningUi(running);
+        if (message) logEntry(message, 'info');
+        if (error) logEntry(`engine error: ${error}`, 'error');
+        relay.send({ type: 'ai:status', running, engine: name, error: error || null });
+      };
+      if (kind === 'stub') return new StubEngine({ onTranscript, onStatus });
+      if (kind === 'deepgram') {
+        const apiKey = els.apiKey.value.trim();
+        if (!apiKey) throw new Error('Enter your Deepgram API key');
+        const deviceId = els.micSelect.value || null;
+        return new DeepgramEngine({ apiKey, deviceId, onTranscript, onStatus });
+      }
+      if (kind === 'local') {
+        const modelId  = els.localModelSelect.value || window.BSP_LOCAL_DEFAULT_MODEL;
+        const deviceId = els.micSelect.value || null;
+        const onModelState = ({ state, progress, message }) => {
+          if (els.engineSelect.value === 'local') updateLocalModelUi(state, progress, message);
+        };
+        return new LocalEngine({ modelId, deviceId, onTranscript, onStatus, onModelState });
+      }
+      throw new Error(`Unknown engine: ${kind}`);
+    }
+
+    async function startEngine() {
+      if (running) return;
+      if (usesDesktopControlMode()) {
+        sendRemoteControl('ai:start');
+        return;
+      }
+      try {
+        setRunningUi(true);
+        engine = buildEngine(els.engineSelect.value);
+        await engine.start();
+        publishPresence('engine-start');
+      } catch (e) {
+        logEntry(String(e.message || e), 'error');
+        setRunningUi(false);
+        relay.send({ type: 'ai:status', running: false, engine: els.engineSelect.value, error: String(e.message || e) });
+      }
+    }
+
+    function stopEngine() {
+      if (usesDesktopControlMode()) {
+        sendRemoteControl('ai:stop');
+        return;
+      }
+      if (engine) {
+        try { engine.stop(); } catch (e) { logEntry(String(e.message || e), 'error'); }
+      }
+      publishPresence('engine-stop');
+    }
+
+    function requestAutoStartEngine() {
+      if (running) return;
+      if (REMOTE_CONTROL_MODE) return;
+      logEntry('remote: ai:start', 'info');
+      startEngine();
+    }
+
+    els.startBtn.addEventListener('click', startEngine);
+    els.stopBtn.addEventListener('click', stopEngine);
+    els.clearBtn.addEventListener('click', () => {
+      els.log.innerHTML = '';
+      if (REMOTE_CONTROL_MODE) sendRemoteHelperControl('clearLog');
+      else publishHelperState('clearLog');
+    });
+    els.mobileCopy.addEventListener('click', copyMobileUrl);
+    els.mobileTargetControl.addEventListener('click', () => setMobileTarget('control'));
+    els.mobileTargetDisplay.addEventListener('click', () => setMobileTarget('display'));
+    els.mobileTargetRemote.addEventListener('click', () => setMobileTarget('remote'));
+    loadMobileConnectInfo();
+    if (REMOTE_CONTROL_MODE) {
+      const status = usesDesktopControlMode()
+        ? 'desktop control mode active: using desktop API key + desktop mic list'
+        : 'remote audio mode active: this device microphone drives helper stream';
+      logEntry(status, 'info');
+    }
+
+    if (els.updateCheckBtn) {
+      els.updateCheckBtn.addEventListener('click', async () => {
+        if (!window.HelperBridge?.checkForUpdates) {
+          window.open(RELEASES_URL, '_blank', 'noopener,noreferrer');
+          return;
+        }
+        const result = await window.HelperBridge.checkForUpdates();
+        if (result && result.ok === false) setHelperUpdateUi({ state: 'error', message: result.error || 'Failed to check updates.' });
+      });
+    }
+    if (els.updateDownloadBtn) {
+      els.updateDownloadBtn.addEventListener('click', async () => {
+        if (!window.HelperBridge?.downloadUpdate) {
+          window.open(RELEASES_URL, '_blank', 'noopener,noreferrer');
+          return;
+        }
+        const result = await window.HelperBridge.downloadUpdate();
+        if (result && result.ok === false) setHelperUpdateUi({ state: 'error', message: result.error || 'Failed to download update.' });
+      });
+    }
+    if (els.updateInstallBtn) {
+      els.updateInstallBtn.addEventListener('click', async () => {
+        if (!window.HelperBridge?.installUpdateNow) {
+          window.open(RELEASES_URL, '_blank', 'noopener,noreferrer');
+          return;
+        }
+        const result = await window.HelperBridge.installUpdateNow();
+        if (result && result.ok === false) setHelperUpdateUi({ state: 'error', message: result.error || 'Failed to install update.' });
+      });
+    }
+    if (window.HelperBridge?.onUpdateStatus) {
+      window.HelperBridge.onUpdateStatus((payload) => setHelperUpdateUi(payload));
+      setHelperUpdateUi({ state: 'idle' });
+    } else {
+      if (els.updateStatus) els.updateStatus.textContent = 'Updates: managed on helper host app';
+      if (els.updateDownloadBtn) els.updateDownloadBtn.style.display = 'none';
+      if (els.updateInstallBtn) els.updateInstallBtn.style.display = 'none';
+    }
+
+    relay.onStatus((connected) => {
+      els.wsDot.classList.toggle('on', connected);
+      els.wsLabel.textContent = connected ? 'Connected' : 'Disconnected';
+      if (connected && usesDesktopControlMode()) {
+        sendRemoteHelperControl('requestState');
+      }
+      if (connected && REMOTE_CONTROL_MODE) publishPresence('relay-connected');
+    });
+
+    relay.on('ai:status', (msg) => {
+      const nextRunning = !!msg.running;
+      const engineName = String(msg.engine || '?');
+      setRunningUi(nextRunning);
+      els.engineLabel.textContent = nextRunning ? `running (${engineName})` : `idle (${engineName})`;
+      if (msg.error) logEntry(`engine error: ${msg.error}`, 'error');
+      if (!usesDesktopControlMode()) publishHelperState('status');
+    });
+
+    relay.on('ai:helper-state', (msg) => {
+      applyIncomingHelperState(msg);
+    });
+
+    relay.on('ai:helper-presence', (msg) => {
+      if (REMOTE_CONTROL_MODE) return;
+      registerRemotePresence(msg);
+    });
+
+    relay.on('ai:helper-control', (msg) => {
+      handleHelperControlMessage(msg);
+    });
+    relay.on('ai:mode', (msg) => {
+      const nextMode = msg && msg.mode === 'song' ? 'song' : 'bible';
+      if (nextMode === aiDetectionMode) return;
+      aiDetectionMode = nextMode;
+      logEntry(`ai mode: ${aiDetectionMode}`, 'info');
+    });
+
+    relay.on('ai:start', () => { requestAutoStartEngine(); });
+    relay.on('ai:stop', () => {
+      if (REMOTE_CONTROL_MODE) {
+        setRunningUi(false);
+        logEntry('remote: ai:stop', 'info');
+        publishPresence('relay-stop');
+        return;
+      }
+      logEntry('remote: ai:stop', 'info');
+      stopEngine();
+    });
+    relay.on('ai:helper-summon', () => { window.HelperBridge?.focusSelf(); });
+    window.HelperBridge?.onAutoStartEngine?.(() => { requestAutoStartEngine(); });
+    if (runtimeParams.get('autoStartEngine') === '1') {
+      setTimeout(() => requestAutoStartEngine(), 150);
+    }
+    relay.on('ai:scripture', (msg) => {
+      const ref = msg.candidates?.[0]?.ref;
+      if (ref) logEntry(`scripture: ${ref}`, 'scripture');
+    });
+
+    if (!REMOTE_CONTROL_MODE) {
+      updateRemotePresenceUi();
+      if (presencePruneTimer) clearInterval(presencePruneTimer);
+      presencePruneTimer = setInterval(pruneRemotePresence, 3000);
+    } else {
+      startPresenceHeartbeat();
+      window.addEventListener('beforeunload', () => {
+        if (presenceTimer) clearInterval(presenceTimer);
+      });
+    }
+  </script>
+</body>
+</html>
