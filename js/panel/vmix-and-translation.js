@@ -1,4 +1,23 @@
+    function getRuntimeHostModeOverride() {
+      try {
+        const params = new URLSearchParams(window.location.search || '');
+        const requested = String(params.get('hostMode') || '').trim().toLowerCase();
+        if ([HOST_MODE_OBS, HOST_MODE_VMIX, HOST_MODE_STANDALONE].includes(requested)) {
+          return requested;
+        }
+      } catch (_) {}
+      if (typeof shouldUseObsBrowserSafeMode === 'function' && shouldUseObsBrowserSafeMode()) {
+        return HOST_MODE_OBS;
+      }
+      if (window.location.protocol !== 'file:' && typeof hasDesktopBridgeRuntime === 'function' && !hasDesktopBridgeRuntime()) {
+        return HOST_MODE_OBS;
+      }
+      return '';
+    }
+
     function getHostMode() {
+      const runtimeOverride = getRuntimeHostModeOverride();
+      if (runtimeOverride) return runtimeOverride;
       return [HOST_MODE_OBS, HOST_MODE_VMIX, HOST_MODE_STANDALONE].includes(hostMode) ? hostMode : HOST_MODE_OBS;
     }
 
@@ -333,7 +352,8 @@
     }
 
     function setHostMode(mode, opts = {}) {
-      hostMode = [HOST_MODE_OBS, HOST_MODE_VMIX, HOST_MODE_STANDALONE].includes(mode) ? mode : HOST_MODE_OBS;
+      const runtimeOverride = getRuntimeHostModeOverride();
+      hostMode = runtimeOverride || ([HOST_MODE_OBS, HOST_MODE_VMIX, HOST_MODE_STANDALONE].includes(mode) ? mode : HOST_MODE_OBS);
       applyHostModeUi();
       if (!opts.silent) saveToStorageDebounced();
     }

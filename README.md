@@ -6,10 +6,18 @@ A modern church presentation system for OBS Studio that lets you display Bible v
 
 ## Preview
 
-![Preview](assets/showcase/rendered/interface-01-card.png)
-![Lowerthird Mode](assets/showcase/rendered/lowerthird-card.png)
-![Auto Retrieve Lyrics](assets/showcase/rendered/auto-lyrics-02-card.png)
-![Languages Preview](assets/showcase/rendered/languages-card.png)
+### Fresh Look in v2.1.0
+
+![New Interface v2.1.0](Bible%20Song%20Pro_Screenshot/New%20Interface%20v2.1.0.png)
+![New Interface v2.1.0 2](Bible%20Song%20Pro_Screenshot/New%20Interface%20V2.1.0%202.png)
+![Ai Helper](Bible%20Song%20Pro_Screenshot/Ai%20Helper.png)
+![AI Assistant Window](Bible%20Song%20Pro_Screenshot/AI%20Assistant%20Window.png)
+
+### Core Workflows
+
+![Lowerthird Mode](Bible%20Song%20Pro_Screenshot/Lowerthird%20Mode.png)
+![Auto Retrieve Lyrics](Bible%20Song%20Pro_Screenshot/Auto-Retrieve%20Lyrics%2002.png)
+![Languages Preview](Bible%20Song%20Pro_Screenshot/Support%20for%2050+%20Languages%2002.png)
 
 ---
 
@@ -32,6 +40,30 @@ A modern church presentation system for OBS Studio that lets you display Bible v
 - Works directly inside OBS Browser Source
 - Increased Lines tab
 - Text content auto-adjusts based screen view-width
+- **AI Scripture Assistant** — real-time speech detection that listens to your sermon and instantly surfaces Bible references as you speak, keeping your operator always one step ahead
+- **Independent Lower Third & Full Screen backgrounds** — set a different visual background for each display mode, with a one-click Link button to mirror both simultaneously
+
+---
+
+## What Is New In v2.1.0 (Compared To OBS-2)
+
+### New Features Added
+
+- **AI Scripture Assistant (Live Scripture HUD)** — a floating, real-time detection panel that listens to spoken audio during worship or preaching and automatically identifies Bible references and song cues. Works for both Bible verse projection and song lyrics display. Runs fully offline with Local AI (Moonshine) or in the cloud via Deepgram — no interruption to your flow
+- **Independent Lower Third and Full Screen Backgrounds** — Lower Third and Full Screen modes now each carry their own dedicated background layer (solid color, image, video, or YouTube). A single Link toggle instantly mirrors both modes to the same background whenever consistency is needed
+- Dedicated AI Helper desktop app with relay-based control and a clean companion UI
+- Cross-platform helper packaging for macOS (Intel and Apple Silicon), Windows (installer and portable), and Linux (AppImage and zip)
+- New feedback pipeline: local backend and Cloudflare Worker deployment option for public issue intake
+- Expanded vMix workflow support with display URL tools, connection state UI, and advanced output routing controls
+- New tutorial hub module and broader modular project structure for maintainability
+
+### Fixes And Reliability Improvements
+
+- Major sync/output runtime hardening to reduce state drift and improve live output consistency
+- Better relay/session resilience with reconnect actions and clearer connection visibility in UI
+- Improved state persistence and sanitization for recent/pinned Bible references and host settings
+- Better input safety through typing shortcut guards to prevent accidental hotkey triggers while editing fields
+- Startup behavior improvements including vMix reconnect-on-start and safer restore flows
 
 ---
 

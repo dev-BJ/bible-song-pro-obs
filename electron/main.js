@@ -3,16 +3,105 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const http = require('http');
+const { spawn: spawnChild } = require('child_process');
 const { WebSocketServer } = require('ws');
+const { autoUpdater } = require('electron-updater');
 
 let mainWindow = null;
 let outputWindow = null;
 let outputClosedCallbacks = new Set();
+let helperProcess = null;
+let helperAutoStartRequestedAt = 0;
 let httpServer = null;
 let relayServer = null;
 const relayClients = new Set();
 const LOCAL_HTTP_PORT = 5510;
 const LOCAL_RELAY_PORT = 5511;
+
+function sendMainUpdateStatus(payload) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  mainWindow.webContents.send('bsp:update-status', payload || {});
+}
+
+function isExpectedMissingReleaseMetadataError(error) {
+  const message = String((error && (error.stack || error.message || error)) || '').toLowerCase();
+  if (!message) return false;
+  return (
+    message.includes('latest-mac.yml') ||
+    message.includes('latest.yml') ||
+    message.includes('404') ||
+    message.includes('not found') ||
+    message.includes('enoent')
+  );
+}
+
+function setupMainAutoUpdater() {
+  if (!app.isPackaged) {
+    sendMainUpdateStatus({ state: 'dev-mode' });
+    return;
+  }
+
+  autoUpdater.autoDownload = false;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  autoUpdater.on('checking-for-update', () => {
+    sendMainUpdateStatus({ state: 'checking' });
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    sendMainUpdateStatus({
+      state: 'available',
+      version: info && info.version ? String(info.version) : '',
+      releaseNotes: info && info.releaseNotes ? String(info.releaseNotes) : ''
+    });
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    sendMainUpdateStatus({ state: 'none' });
+  });
+
+  autoUpdater.on('download-progress', (progress) => {
+    sendMainUpdateStatus({
+      state: 'downloading',
+      percent: progress && typeof progress.percent === 'number' ? progress.percent : 0
+    });
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    sendMainUpdateStatus({
+      state: 'downloaded',
+      version: info && info.version ? String(info.version) : '',
+      releaseNotes: info && info.releaseNotes ? String(info.releaseNotes) : ''
+    });
+  });
+
+  autoUpdater.on('error', (error) => {
+    if (isExpectedMissingReleaseMetadataError(error)) {
+      sendMainUpdateStatus({ state: 'none' });
+      return;
+    }
+    sendMainUpdateStatus({
+      state: 'error',
+      message: error && error.message ? String(error.message) : 'Update failed'
+    });
+  });
+}
+
+function scheduleMainAutoUpdateCheck() {
+  if (!app.isPackaged) return;
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch((error) => {
+      if (isExpectedMissingReleaseMetadataError(error)) {
+        sendMainUpdateStatus({ state: 'none' });
+        return;
+      }
+      sendMainUpdateStatus({
+        state: 'error',
+        message: error && error.message ? String(error.message) : 'Unable to check for updates'
+      });
+    });
+  }, 5000);
+}
 
 function resolveAppFile(name) {
   return path.join(__dirname, '..', name);
@@ -78,22 +167,89 @@ function startHttpServer() {
       res.end(data);
     });
   });
-  httpServer.listen(LOCAL_HTTP_PORT, '0.0.0.0');
+  httpServer.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.log(`[bsp] HTTP port ${LOCAL_HTTP_PORT} already in use, using existing server`);
+      try { httpServer.close(); } catch (_) {}
+      httpServer = null;
+      return;
+    }
+    console.error('[bsp] HTTP server error:', err && err.message ? err.message : err);
+  });
+  httpServer.listen(LOCAL_HTTP_PORT, '0.0.0.0', () => {
+    console.log(`[bsp] HTTP server listening on :${LOCAL_HTTP_PORT}`);
+  });
 }
 
 function startRelayServer() {
   if (relayServer) return;
   relayServer = new WebSocketServer({ host: '0.0.0.0', port: LOCAL_RELAY_PORT });
+  relayServer.on('listening', () => {
+    console.log(`[bsp] Relay WS listening on :${LOCAL_RELAY_PORT}`);
+  });
+  relayServer.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.log(`[bsp] Relay WS port ${LOCAL_RELAY_PORT} already in use, using existing relay`);
+      try { relayServer.close(); } catch (_) {}
+      relayServer = null;
+      return;
+    }
+    console.error('[bsp] Relay WS error:', err && err.message ? err.message : err);
+  });
   relayServer.on('connection', (socket) => {
     relayClients.add(socket);
     socket.on('close', () => relayClients.delete(socket));
     socket.on('message', (payload) => {
+      try {
+        const parsed = JSON.parse(payload.toString());
+        const msgType = String(parsed && parsed.type || '');
+        if (msgType === 'ai:start' || msgType === 'ai:helper-summon') {
+          openHelper({ autoStart: true });
+        }
+      } catch (_) {}
       relayClients.forEach((client) => {
         if (client === socket || client.readyState !== 1) return;
         client.send(payload.toString());
       });
     });
   });
+}
+
+function openHelper(options = {}) {
+  // The helper-app uses a single-instance lock, so a duplicate spawn
+  // simply triggers the existing process's `second-instance` event and
+  // refocuses its window. ELECTRON_RUN_AS_NODE is stripped because if
+  // it leaks through it would force the helper to run as plain Node
+  // (no window). See scripts/launch.js for the same workaround.
+  const env = { ...process.env };
+  delete env.ELECTRON_RUN_AS_NODE;
+  const helperEntry = path.join(__dirname, '..', 'helper-app', 'main.js');
+  const autoStart = !!options.autoStart;
+  const helperArgs = [helperEntry];
+  if (autoStart) {
+    helperAutoStartRequestedAt = Date.now();
+    helperArgs.push('--auto-start-engine');
+  }
+  try {
+    helperProcess = spawnChild(process.execPath, helperArgs, {
+      env,
+      // Forward child stdio to BSP's terminal so any helper crash
+      // is visible (was 'ignore' which hid silent failures).
+      stdio: ['ignore', 'inherit', 'inherit'],
+      detached: false
+    });
+    console.log('[bsp] spawned helper pid', helperProcess.pid);
+    helperProcess.on('exit', (code, signal) => {
+      console.log('[bsp] helper exited code=', code, 'signal=', signal);
+      helperProcess = null;
+    });
+    helperProcess.on('error', (err) => {
+      console.error('[bsp] failed to spawn helper:', err && err.message ? err.message : err);
+    });
+    return { ok: true, pid: helperProcess.pid, autoStartRequestedAt: helperAutoStartRequestedAt };
+  } catch (err) {
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
 }
 
 function broadcastRelayMessage(message) {
@@ -249,6 +405,7 @@ app.whenReady().then(() => {
     broadcastRelayMessage(message);
     return { ok: true };
   });
+  ipcMain.handle('bsp:open-helper', (_event, options = {}) => openHelper(options));
   ipcMain.handle('bsp:get-local-server-info', () => getLocalServerInfo());
   ipcMain.handle('bsp:copy-text', (_event, text) => {
     clipboard.writeText(String(text || ''));
@@ -263,7 +420,79 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('bsp:get-system-stats', () => getSystemStats());
+  ipcMain.handle('bsp:update-check', async () => {
+    if (!app.isPackaged) return { ok: false, error: 'Updates are only available in packaged builds.' };
+    try {
+      await autoUpdater.checkForUpdates();
+      return { ok: true };
+    } catch (error) {
+      if (isExpectedMissingReleaseMetadataError(error)) {
+        sendMainUpdateStatus({ state: 'none' });
+        return { ok: true };
+      }
+      return { ok: false, error: error && error.message ? String(error.message) : 'Failed to check updates.' };
+    }
+  });
+  ipcMain.handle('bsp:update-download', async () => {
+    if (!app.isPackaged) return { ok: false, error: 'Updates are only available in packaged builds.' };
+    try {
+      await autoUpdater.downloadUpdate();
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error && error.message ? String(error.message) : 'Failed to download update.' };
+    }
+  });
+  ipcMain.handle('bsp:update-install', async () => {
+    if (!app.isPackaged) return { ok: false, error: 'Updates are only available in packaged builds.' };
+    setImmediate(() => autoUpdater.quitAndInstall(false, true));
+    return { ok: true };
+  });
   ipcMain.handle('bsp:save-theme', () => ({ ok: true }));
+  ipcMain.handle('bsp:http-fetch-text', async (_event, payload = {}) => {
+    const rawUrl = payload && payload.url ? String(payload.url).trim() : '';
+    if (!rawUrl) return { ok: false, error: 'Missing URL.' };
+
+    const timeoutMs = Math.max(3000, Math.min(30000, Number(payload.timeoutMs) || 12000));
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(rawUrl, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'BibleSongPro/1.0 (+https://github.com/Johnbatey/bible-song-pro-obs)',
+          'Accept': 'text/plain, text/xml, application/xml, application/json, text/html;q=0.8,*/*;q=0.5'
+        }
+      });
+      const text = await response.text();
+      return {
+        ok: response.ok,
+        status: response.status,
+        text: String(text || ''),
+        contentType: String(response.headers.get('content-type') || '')
+      };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error && error.message ? String(error.message) : 'Remote fetch failed.'
+      };
+    } finally {
+      clearTimeout(timer);
+    }
+  });
+  ipcMain.handle('bsp:open-external-url', async (_event, rawUrl) => {
+    const url = String(rawUrl || '').trim();
+    if (!url) return { ok: false, error: 'Missing URL.' };
+    if (!/^https?:\/\//i.test(url)) {
+      return { ok: false, error: 'Only http/https URLs are allowed.' };
+    }
+    try {
+      await shell.openExternal(url);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error && error.message ? String(error.message) : 'Failed to open external URL.' };
+    }
+  });
   ipcMain.handle('bsp:open-in-location', async (_event, targetPath) => {
     if (targetPath) await shell.showItemInFolder(targetPath);
     return { ok: true };
@@ -276,6 +505,8 @@ app.whenReady().then(() => {
   startHttpServer();
   startRelayServer();
   createMainWindow();
+  setupMainAutoUpdater();
+  scheduleMainAutoUpdateCheck();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();

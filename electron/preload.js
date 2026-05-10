@@ -31,15 +31,41 @@ const BSPDesktop = {
   async getSystemStats() {
     return ipcRenderer.invoke('bsp:get-system-stats');
   },
+  async openHelper(options = {}) {
+    return ipcRenderer.invoke('bsp:open-helper', options);
+  },
   async saveTheme(theme) {
     return ipcRenderer.invoke('bsp:save-theme', theme);
   },
   async openRecordingInLocation(payload = {}) {
     return ipcRenderer.invoke('bsp:open-in-location', payload.path);
   },
+  async checkForUpdates() {
+    return ipcRenderer.invoke('bsp:update-check');
+  },
+  async downloadUpdate() {
+    return ipcRenderer.invoke('bsp:update-download');
+  },
+  async installUpdateNow() {
+    return ipcRenderer.invoke('bsp:update-install');
+  },
+  async fetchRemoteText(url, options = {}) {
+    return ipcRenderer.invoke('bsp:http-fetch-text', {
+      url,
+      timeoutMs: options && Number.isFinite(options.timeoutMs) ? options.timeoutMs : undefined
+    });
+  },
+  async openExternalUrl(url) {
+    return ipcRenderer.invoke('bsp:open-external-url', url);
+  },
   onOutputClosed(callback) {
     ipcRenderer.removeAllListeners('bsp:output-closed');
     ipcRenderer.on('bsp:output-closed', () => callback());
+  },
+  onUpdateStatus(callback) {
+    if (typeof callback !== 'function') return;
+    ipcRenderer.removeAllListeners('bsp:update-status');
+    ipcRenderer.on('bsp:update-status', (_event, payload) => callback(payload || {}));
   }
 };
 

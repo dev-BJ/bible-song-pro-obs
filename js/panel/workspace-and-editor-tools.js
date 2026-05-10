@@ -234,11 +234,17 @@
     }
 
     function createDefaultFocusedWorkspaceControlState(tab) {
+      const defaultBackgroundByRatio = {
+        full: { bgToggle: true, bgMode: 'solid' },
+        lt: { bgToggle: tab === 'songs' ? !!songBgUserOn : true, bgMode: 'solid' }
+      };
       return {
         linesPerPage: (tab === 'bible') ? 1 : Math.min(2, getMaxLinesForCurrentTab(tab)),
         activeRatio: 'full',
-        bgToggle: true,
-        bgMode: 'solid',
+        bgToggle: defaultBackgroundByRatio.full.bgToggle,
+        bgMode: defaultBackgroundByRatio.full.bgMode,
+        backgroundLinked: true,
+        backgroundByRatio: defaultBackgroundByRatio,
         bgType: 'color',
         songTransitionType: 'fade',
         songTransitionDuration: '0.8',
@@ -258,17 +264,55 @@
       return next;
     }
 
+    function getFocusedWorkspaceRatioKey(ratio = activeRatio) {
+      return ratio === '16-9' ? 'lt' : 'full';
+    }
+
+    function normalizeFocusedWorkspaceBackgroundState(raw) {
+      return {
+        bgToggle: raw && raw.bgToggle != null ? !!raw.bgToggle : true,
+        bgMode: raw && raw.bgMode === 'gradient' ? 'gradient' : 'solid'
+      };
+    }
+
+    function normalizeFocusedWorkspaceBackgroundByRatio(raw, legacy, tab) {
+      const defaults = createDefaultFocusedWorkspaceControlState(tab).backgroundByRatio;
+      const source = (raw && typeof raw === 'object') ? raw : {};
+      const result = {
+        full: normalizeFocusedWorkspaceBackgroundState(source.full || defaults.full),
+        lt: normalizeFocusedWorkspaceBackgroundState(source.lt || defaults.lt)
+      };
+      if (!raw && legacy && typeof legacy === 'object') {
+        const legacyKey = getFocusedWorkspaceRatioKey(legacy.activeRatio);
+        result[legacyKey] = normalizeFocusedWorkspaceBackgroundState({
+          bgToggle: legacy.bgToggle,
+          bgMode: legacy.bgMode
+        });
+      }
+      return result;
+    }
+
     function normalizeFocusedWorkspaceControlState(raw, tab) {
       const base = createDefaultFocusedWorkspaceControlState(tab);
       const next = (raw && typeof raw === 'object') ? raw : {};
       const maxLines = getMaxLinesForCurrentTab(tab);
       const rawLines = Number.parseInt(next.linesPerPage, 10);
       const rawRatio = next.activeRatio === '16-9' ? '16-9' : 'full';
+      const backgroundByRatio = normalizeFocusedWorkspaceBackgroundByRatio(next.backgroundByRatio, next, tab);
+      const backgroundLinked = next.backgroundLinked == null ? base.backgroundLinked : next.backgroundLinked === true;
+      let activeBackground = backgroundByRatio[getFocusedWorkspaceRatioKey(rawRatio)] || backgroundByRatio.full;
+      if (backgroundLinked) {
+        activeBackground = normalizeFocusedWorkspaceBackgroundState(activeBackground);
+        backgroundByRatio.full = { ...activeBackground };
+        backgroundByRatio.lt = { ...activeBackground };
+      }
       return {
         linesPerPage: Math.max(1, Math.min(maxLines, Number.isFinite(rawLines) ? rawLines : base.linesPerPage)),
         activeRatio: rawRatio,
-        bgToggle: next.bgToggle == null ? base.bgToggle : !!next.bgToggle,
-        bgMode: next.bgMode === 'gradient' ? 'gradient' : 'solid',
+        bgToggle: activeBackground.bgToggle,
+        bgMode: activeBackground.bgMode,
+        backgroundLinked,
+        backgroundByRatio,
         bgType: next.bgType === 'image' || next.bgType === 'video' ? next.bgType : 'color',
         songTransitionType: String(next.songTransitionType || base.songTransitionType || 'fade'),
         songTransitionDuration: String(next.songTransitionDuration || base.songTransitionDuration || '0.8'),
@@ -294,11 +338,27 @@
     function captureFocusedWorkspaceControlState(tab = sidebarTab) {
       const bgToggle = document.getElementById('bg-toggle');
       const bgType = document.getElementById('bg-type');
+      const existing = focusedWorkspaceControlsByTab && focusedWorkspaceControlsByTab[tab]
+        ? focusedWorkspaceControlsByTab[tab]
+        : null;
+      const backgroundByRatio = normalizeFocusedWorkspaceBackgroundByRatio(existing && existing.backgroundByRatio, existing, tab);
+      const backgroundLinked = !!(existing && existing.backgroundLinked);
+      const currentBackground = normalizeFocusedWorkspaceBackgroundState({
+        bgToggle: bgToggle ? !!bgToggle.checked : true,
+        bgMode
+      });
+      backgroundByRatio[getFocusedWorkspaceRatioKey(activeRatio)] = currentBackground;
+      if (backgroundLinked) {
+        backgroundByRatio.full = { ...currentBackground };
+        backgroundByRatio.lt = { ...currentBackground };
+      }
       return normalizeFocusedWorkspaceControlState({
         linesPerPage,
         activeRatio,
         bgToggle: bgToggle ? !!bgToggle.checked : true,
         bgMode,
+        backgroundLinked,
+        backgroundByRatio,
         bgType: bgType ? bgType.value : 'color',
         songTransitionType: document.getElementById('song-transition-type')?.value || 'fade',
         songTransitionDuration: document.getElementById('song-transition-duration')?.value || '0.8',
@@ -365,6 +425,7 @@
       if (ratioCustomBtn) ratioCustomBtn.classList.toggle('active', false);
 
       updateBgModeUi();
+      updateModeBackgroundLinkUi();
       updateBgTypePicker();
       handleBgTypeChange();
       syncBgOpacitySlider();
@@ -386,6 +447,127 @@
         updateButtonView({ preserveScroll: true, skipAutoScroll: true });
       }
       return true;
+    }
+
+    function applyFocusedWorkspaceBackgroundForRatio(tab = sidebarTab, ratio = activeRatio) {
+      if (!FOCUSED_WORKSPACE_TABS.includes(tab)) return false;
+      const controls = ensureFocusedWorkspaceControlsState();
+      const state = normalizeFocusedWorkspaceControlState(controls[tab], tab);
+      controls[tab] = state;
+      const next = state.backgroundByRatio[getFocusedWorkspaceRatioKey(ratio)] || state.backgroundByRatio.full;
+      bgMode = next.bgMode;
+      const bgToggle = document.getElementById('bg-toggle');
+      if (bgToggle) bgToggle.checked = !!next.bgToggle;
+      updateBgModeUi();
+      updateModeBackgroundLinkUi();
+      return true;
+    }
+
+    function isModeBackgroundLinked(tab = sidebarTab) {
+      if (!FOCUSED_WORKSPACE_TABS.includes(tab)) return false;
+      const controls = ensureFocusedWorkspaceControlsState();
+      const state = normalizeFocusedWorkspaceControlState(controls[tab], tab);
+      controls[tab] = state;
+      return !!state.backgroundLinked;
+    }
+
+    function updateModeBackgroundLinkUi() {
+      const icon = document.getElementById('mode-bg-link-icon');
+      if (!icon) return;
+      const linked = isModeBackgroundLinked(sidebarTab);
+      icon.classList.toggle('linked', linked);
+      icon.setAttribute('aria-pressed', linked ? 'true' : 'false');
+      icon.title = linked ? 'Unlink FS and LT backgrounds' : 'Link FS and LT backgrounds';
+      icon.setAttribute('aria-label', icon.title);
+    }
+
+    function setModeBackgroundLinked(linked) {
+      if (!FOCUSED_WORKSPACE_TABS.includes(sidebarTab)) return;
+      saveFocusedWorkspaceControlsForTab(sidebarTab);
+      const controls = ensureFocusedWorkspaceControlsState();
+      const state = normalizeFocusedWorkspaceControlState(controls[sidebarTab], sidebarTab);
+      const bgToggle = document.getElementById('bg-toggle');
+      const currentBackground = normalizeFocusedWorkspaceBackgroundState({
+        bgToggle: bgToggle ? !!bgToggle.checked : true,
+        bgMode
+      });
+      state.backgroundLinked = !!linked;
+      state.backgroundByRatio[getFocusedWorkspaceRatioKey(activeRatio)] = { ...currentBackground };
+      if (state.backgroundLinked) {
+        state.backgroundByRatio.full = { ...currentBackground };
+        state.backgroundByRatio.lt = { ...currentBackground };
+      }
+      controls[sidebarTab] = normalizeFocusedWorkspaceControlState(state, sidebarTab);
+      updateModeBackgroundLinkUi();
+      if (typeof saveToStorageDebounced === 'function') saveToStorageDebounced();
+    }
+
+    function toggleModeBackgroundLinked() {
+      setModeBackgroundLinked(!isModeBackgroundLinked(sidebarTab));
+    }
+
+    function setupModeBackgroundLinkControl() {
+      updateModeBackgroundLinkUi();
+    }
+
+    function getWorkspaceFontSizeInputId(ratio = activeRatio) {
+      return ratio === '16-9' ? 'font-size-lt-val' : 'font-size-val';
+    }
+
+    function getWorkspaceFontSizeValue() {
+      const inputId = getWorkspaceFontSizeInputId();
+      const input = document.getElementById(inputId);
+      const fallback = activeRatio === '16-9'
+        ? (typeof getEffectiveLtFont === 'function' ? getEffectiveLtFont() : 36)
+        : DEFAULT_BIBLE_FULL_FONT;
+      const value = Number(input && input.value !== '' ? input.value : fallback);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function updateWorkspaceFontSizeControl() {
+      const valueBtn = document.getElementById('workspace-font-size-value');
+      const wrap = document.getElementById('workspace-font-size-control');
+      if (!valueBtn || !wrap) return;
+      const value = Math.round(getWorkspaceFontSizeValue());
+      const modeLabel = activeRatio === '16-9' ? 'LT' : 'FS';
+      const label = `${modeLabel} verse font size: ${value}pt`;
+      valueBtn.textContent = `${value}pt`;
+      valueBtn.title = `${label}. Click to increase.`;
+      wrap.title = label;
+      wrap.setAttribute('aria-label', label);
+    }
+
+    function setWorkspaceFontSizeValue(value) {
+      const input = document.getElementById(getWorkspaceFontSizeInputId());
+      if (!input) return;
+      const min = Number(input.min);
+      const max = Number(input.max);
+      let next = Number(value);
+      if (!Number.isFinite(next)) next = getWorkspaceFontSizeValue();
+      if (Number.isFinite(min)) next = Math.max(min, next);
+      if (Number.isFinite(max)) next = Math.min(max, next);
+      input.value = String(Math.round(next));
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      updateWorkspaceFontSizeControl();
+    }
+
+    function stepWorkspaceFontSize(direction) {
+      const input = document.getElementById(getWorkspaceFontSizeInputId());
+      const step = Number(input && input.step);
+      const delta = (Number.isFinite(step) && step > 0 ? step : 1) * (Number(direction) || 0);
+      setWorkspaceFontSizeValue(getWorkspaceFontSizeValue() + delta);
+    }
+
+    function setupWorkspaceFontSizeControl() {
+      ['font-size-val', 'font-size-lt-val'].forEach((id) => {
+        const input = document.getElementById(id);
+        if (!input || input.dataset.workspaceFontSizeBound === '1') return;
+        input.dataset.workspaceFontSizeBound = '1';
+        input.addEventListener('input', updateWorkspaceFontSizeControl);
+        input.addEventListener('change', updateWorkspaceFontSizeControl);
+      });
+      updateWorkspaceFontSizeControl();
     }
 
     function getMaxLinesForCurrentTab(tab = sidebarTab) {
@@ -482,14 +664,22 @@
     function setRatio(r) {
       if (r === 'custom') r = 'full';
       const prevRatio = activeRatio;
+      const useFocusedWorkspaceControls = isFocusedWorkspaceMode();
+      if (useFocusedWorkspaceControls) {
+        saveFocusedWorkspaceControlsForTab(sidebarTab);
+      }
       activeRatio = r;
       document.getElementById('ratio-full').classList.toggle('active', r === 'full');
       document.getElementById('ratio-lt').classList.toggle('active', r === '16-9');
       document.getElementById('ratio-custom').classList.toggle('active', r === 'custom');
       
       if (r === 'custom' && ltStyle === 'default') setLtStyle('custom');
-      if (r === 'full' && prevRatio !== 'full') document.getElementById('bg-toggle').checked = true;
-      if (r === '16-9') applyLtBgDefaultForTab(getEffectiveContentTab());
+      if (useFocusedWorkspaceControls) {
+        applyFocusedWorkspaceBackgroundForRatio(sidebarTab, r);
+      } else {
+        if (r === 'full' && prevRatio !== 'full') document.getElementById('bg-toggle').checked = true;
+        if (r === '16-9') applyLtBgDefaultForTab(getEffectiveContentTab());
+      }
       const panelKind = getCurrentPanelContentKind();
       if (isLive && livePointer && panelKind && livePointer.kind === panelKind) {
         liveRatio = r;
@@ -499,6 +689,8 @@
       syncBgOpacitySlider();
       updateSongTextTransformControl();
       handleSongFullFontState({ suppressLiveUpdate: true });
+      updateModeBackgroundLinkUi();
+      updateWorkspaceFontSizeControl();
       onAnyControlChange();
     }
 
@@ -1021,6 +1213,16 @@
       return Number(fontInput.value || DEFAULT_BIBLE_FULL_FONT);
     }
 
+    function getLongVerseFullFontBaseSize(preferredValue = null) {
+      if (longVerseFullFontActive && Number.isFinite(longVerseFullFontSnapshot)) {
+        return Number(longVerseFullFontSnapshot);
+      }
+      const explicitValue = Number(preferredValue);
+      if (Number.isFinite(explicitValue)) return explicitValue;
+      const capturedValue = captureFullFontSize();
+      return Number.isFinite(capturedValue) ? capturedValue : DEFAULT_BIBLE_FULL_FONT;
+    }
+
     function applyLongVerseFullFontOverride(key, factor = 0.8, sourceFontSize = null) {
       if (!key) return;
       const fontInput = document.getElementById('font-size-val');
@@ -1465,7 +1667,7 @@
         populateLanguageSelect();
         setLanguage(currentLanguage, { silent: true });
         if (typeof setSettingsTargetTab === 'function') {
-          setSettingsTargetTab('follow', { silent: true });
+            setSettingsTargetTab('bible', { silent: true });
         }
       } else if (id === 'newSongModal') {
         resetNewSongLookupState({ keepInputs: false });
@@ -2533,4 +2735,6 @@
       positionSidebarPopup();
       positionSidebarQuickActions();
     }, true);
+    setupModeBackgroundLinkControl();
+    setupWorkspaceFontSizeControl();
     

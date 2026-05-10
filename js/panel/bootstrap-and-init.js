@@ -228,9 +228,62 @@
 
       const hideMirrorResults = () => {
         resultsBox.style.display = 'none';
-        resultsBox.innerHTML = '';
+        resultsBox.replaceChildren();
+        resultsBox._sourceItems = [];
         mirrorResultIdx = -1;
       };
+
+      if (!resultsBox.dataset.eventsBound) {
+        resultsBox.dataset.eventsBound = '1';
+        resultsBox.addEventListener('mousedown', (e) => {
+          const target = e.target.closest('.nav-mirror-result-item, .nav-mirror-close-btn');
+          if (target && resultsBox.contains(target)) e.preventDefault();
+        });
+        resultsBox.addEventListener('click', (e) => {
+          const closeBtn = e.target.closest('.nav-mirror-close-btn');
+          if (closeBtn && resultsBox.contains(closeBtn)) {
+            hideMirrorResults();
+            return;
+          }
+          const row = e.target.closest('.nav-mirror-result-item');
+          if (!row || !resultsBox.contains(row)) return;
+          const sourceIndex = Number(row.dataset.navResultIndex);
+          const sourceItems = Array.isArray(resultsBox._sourceItems) ? resultsBox._sourceItems : [];
+          const srcItem = sourceItems[sourceIndex];
+          if (!srcItem) return;
+          if (typeof srcItem.activate === 'function') {
+            srcItem.activate();
+          } else if (srcItem.row) {
+            srcItem.row.click();
+          } else {
+            return;
+          }
+          mirror.focus();
+          hideMirrorResults();
+        });
+        resultsBox.addEventListener('contextmenu', (e) => {
+          const row = e.target.closest('.nav-mirror-result-item');
+          if (!row || !resultsBox.contains(row)) return;
+          const sourceIndex = Number(row.dataset.navResultIndex);
+          const sourceItems = Array.isArray(resultsBox._sourceItems) ? resultsBox._sourceItems : [];
+          const srcItem = sourceItems[sourceIndex];
+          if (!srcItem) return;
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof srcItem.contextMenu === 'function') {
+            srcItem.contextMenu(e.clientX, e.clientY);
+          } else if (srcItem.row) {
+            srcItem.row.dispatchEvent(new MouseEvent('contextmenu', {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              clientX: e.clientX,
+              clientY: e.clientY,
+              button: 2
+            }));
+          }
+        });
+      }
 
       const refreshNavMirrorResults = () => {
         if (document.activeElement !== mirror) {
@@ -242,65 +295,49 @@
           hideMirrorResults();
           return;
         }
-        const sourceItems = Array.from(document.querySelectorAll('#song-list .song-item'));
+        const sourceList = document.getElementById('song-list');
+        const sourceItems = sourceList && Array.isArray(sourceList._navMirrorItems)
+          ? sourceList._navMirrorItems
+          : Array.from(document.querySelectorAll('#song-list .song-item')).map((row) => ({
+              row,
+              title: row.querySelector('.search-title')?.textContent || row.querySelector('span')?.textContent?.trim() || row.textContent.trim(),
+              snippet: row.querySelector('.search-snippet')?.textContent || '',
+              active: row.classList.contains('active')
+            }));
         if (!sourceItems.length) {
           hideMirrorResults();
           return;
         }
-        resultsBox.innerHTML = '';
+        const visibleItems = sourceItems.slice(0, 40);
+        resultsBox._sourceItems = visibleItems;
+        const frag = document.createDocumentFragment();
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'nav-mirror-close-btn';
         closeBtn.setAttribute('aria-label', 'Close search results');
         closeBtn.textContent = '×';
-        closeBtn.onmousedown = (e) => e.preventDefault();
-        closeBtn.onclick = () => hideMirrorResults();
-        resultsBox.appendChild(closeBtn);
-        sourceItems.slice(0, 40).forEach((srcItem, i) => {
+        frag.appendChild(closeBtn);
+        visibleItems.forEach((srcItem, i) => {
           const row = document.createElement('div');
-          row.className = 'song-item nav-mirror-result-item' + (srcItem.classList.contains('active') ? ' active' : '');
+          row.className = 'song-item nav-mirror-result-item' + (srcItem.active ? ' active' : '');
           row.dataset.navResultIndex = String(i);
-          const titleEl = srcItem.querySelector('.search-title');
-          const snippetEl = srcItem.querySelector('.search-snippet');
           const left = document.createElement('div');
-          if (titleEl || snippetEl) {
-            if (titleEl) {
-              const title = document.createElement('span');
-              title.className = 'search-title';
-              title.textContent = titleEl.textContent || '';
-              left.appendChild(title);
-            }
-            if (snippetEl) {
-              const snippet = document.createElement('span');
-              snippet.className = 'search-snippet';
-              snippet.textContent = snippetEl.textContent || '';
-              left.appendChild(snippet);
-            }
+          if (srcItem.snippet) {
+            const title = document.createElement('span');
+            title.className = 'search-title';
+            title.textContent = srcItem.title || '';
+            left.appendChild(title);
+            const snippet = document.createElement('span');
+            snippet.className = 'search-snippet';
+            snippet.textContent = srcItem.snippet;
+            left.appendChild(snippet);
           } else {
-            const title = srcItem.querySelector('span')?.textContent?.trim() || srcItem.textContent.trim();
-            left.textContent = title;
+            left.textContent = srcItem.title || '';
           }
           row.appendChild(left);
-          row.onmousedown = (e) => e.preventDefault();
-          row.onclick = () => {
-            srcItem.click();
-            mirror.focus();
-            hideMirrorResults();
-          };
-          row.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            srcItem.dispatchEvent(new MouseEvent('contextmenu', {
-              bubbles: true,
-              cancelable: true,
-              view: window,
-              clientX: e.clientX,
-              clientY: e.clientY,
-              button: 2
-            }));
-          });
-          resultsBox.appendChild(row);
+          frag.appendChild(row);
         });
+        resultsBox.replaceChildren(frag);
         resultsBox.style.display = resultsBox.children.length ? 'block' : 'none';
       };
 
@@ -1007,6 +1044,14 @@
         const ltOffsetXEl = document.getElementById('lt-offset-x');
         if (ltOffsetXEl) ltOffsetXEl.value = ui.ltOffsetX;
       }
+      if (ui.fullOffsetX != null) {
+        const fullOffsetXEl = document.getElementById('full-offset-x');
+        if (fullOffsetXEl) fullOffsetXEl.value = ui.fullOffsetX;
+      }
+      if (ui.fullOffsetY != null) {
+        const fullOffsetYEl = document.getElementById('full-offset-y');
+        if (fullOffsetYEl) fullOffsetYEl.value = ui.fullOffsetY;
+      }
       if (ui.ltBorderRadius != null) {
         const ltRadiusEl = document.getElementById('lt-border-radius');
         if (ltRadiusEl) ltRadiusEl.value = ui.ltBorderRadius;
@@ -1036,6 +1081,7 @@
       updateLinePickerAvailability();
       updateCustomModeAvailability();
       updateTextEditorModeAvailability();
+      if (typeof updateWorkspaceFontSizeControl === 'function') updateWorkspaceFontSizeControl();
       updateSettingsTargetControl();
       applyProjectionSettingsProfileForTab(getEffectiveSettingsTargetTab(), { triggerChange: false });
       if (activeRatio === '16-9' && !hasBgToggle) applyLtBgDefaultForTab(sidebarTab);
@@ -4070,6 +4116,9 @@
       document.querySelectorAll('.sm-tab-panel').forEach(panel => {
         panel.classList.toggle('active', panel.dataset.smPanel === tabId);
       });
+      if (tabId === 'tutorial' && typeof window.initTutorialHub === 'function') {
+        window.initTutorialHub();
+      }
     }
 
     let feedbackSuccessOverlayTimer = null;
@@ -4699,6 +4748,7 @@
       saveState();
       if (pendingHello) {
         pendingHello = false;
+        if (typeof sendSyncState === 'function') sendSyncState();
       }
       if (pendingPersist) {
         pendingPersist = false;

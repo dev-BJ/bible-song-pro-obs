@@ -625,6 +625,7 @@
       perspective: 1000px;
     }
   </style>
+  <link rel="stylesheet" href="css/display/bsp-display.css">
 </head>
 <body>
   <div id="bg-layer" class="hardware-accelerated">
@@ -661,6 +662,7 @@
     // ===== CONSTANTS / GLOBALS =====
     const CHANNEL_NAME = 'bible_song_pro_v1';
     const RELAY_DEFAULT_PORT = 5511;
+    const REMOTE_SHOW_PROTOCOL_VERSION = 1;
     const SYNC_MIRROR_DB_NAME = 'bible-song-pro-sync';
     const SYNC_MIRROR_DB_VERSION = 1;
     const SYNC_MIRROR_STORE = 'messages';
@@ -685,6 +687,9 @@
     let relayUrl = '';
     let relayReconnectTimer = null;
     let relayBackoff = 1500;
+    let relayConnectedOnce = false;
+    let mirrorUpdateFallbackAt = 0;
+    const relayClientId = `display_${Math.random().toString(36).slice(2, 10)}`;
     let syncMirrorDbPromise = null;
     let syncMirrorPollTimer = null;
     let lastMirrorSeq = 0;
@@ -865,6 +870,7 @@
     function syncFromMirror(force = false) {
       readMirrorMessage().then(record => {
         if (!record || !record.msg) return;
+        if (record.msg.type === 'UPDATE' && mirrorUpdateFallbackAt && Date.now() < mirrorUpdateFallbackAt) return;
         const seq = Number(record.seq || (record.msg && record.msg.seq) || 0);
         if (!force && seq && seq <= lastMirrorSeq) return;
         lastMirrorSeq = Math.max(lastMirrorSeq, seq);
@@ -897,22 +903,23 @@
       else console.log('init: debug overlay hidden');
 
       // Send initial ping + state request
-      if (channel) channel.postMessage({ type: 'PONG' });
-      if (channel) channel.postMessage({ type: 'HELLO', proto: 1, sender: 'display', ts: Date.now() });
+      mirrorUpdateFallbackAt = Date.now() + 2500;
+      sendDisplayHello('init');
       connectRelay();
-      syncFromMirror(true);
       startMirrorPolling();
       if (helloTimer) clearInterval(helloTimer);
       helloTimer = setInterval(() => {
-        if (hasSynced) {
+        if (hasSynced && relayConnectedOnce) {
           clearInterval(helloTimer);
           helloTimer = null;
           return;
         }
-        if (channel) channel.postMessage({ type: 'HELLO', proto: 1, sender: 'display', ts: Date.now() });
-        relaySend({ type: 'HELLO', proto: 1, sender: 'display', ts: Date.now() });
-        syncFromMirror(false);
-      }, 2000);
+        sendDisplayHello('retry');
+        if (!relaySocket || relaySocket.readyState === WebSocket.CLOSED || relaySocket.readyState === WebSocket.CLOSING) {
+          connectRelay();
+        }
+        if (!hasSynced) syncFromMirror(false);
+      }, 500);
       
       // Self-test: only run in debug mode
       if (DEBUG_MODE) {
@@ -946,9 +953,49 @@
       }
     }
 
+    function normalizePairCode(raw) {
+      return String(raw || '').replace(/[^0-9a-zA-Z]/g, '').slice(0, 32).toUpperCase();
+    }
+
+    function getRelayPairCode() {
+      try {
+        const params = new URLSearchParams(window.location.search || '');
+        return normalizePairCode(params.get('pair') || params.get('token') || '');
+      } catch (_) {
+        return '';
+      }
+    }
+
+    function relayNormalizeInbound(raw) {
+      if (!raw || typeof raw !== 'object') return null;
+      if (raw.type !== 'RS_ENVELOPE') return raw;
+      const ver = Number(raw.version || 0);
+      if (!Number.isFinite(ver) || ver < 1) return null;
+      if (!raw.payload || typeof raw.payload !== 'object') return null;
+      if (raw.senderId && raw.senderId === relayClientId) return null;
+      return raw.payload;
+    }
+
     function relaySend(msg) {
       if (!relaySocket || relaySocket.readyState !== WebSocket.OPEN) return;
-      try { relaySocket.send(JSON.stringify(msg)); } catch (e) {}
+      if (!msg || typeof msg !== 'object' || typeof msg.type !== 'string') return;
+      const pairCode = getRelayPairCode();
+      const envelope = {
+        type: 'RS_ENVELOPE',
+        version: REMOTE_SHOW_PROTOCOL_VERSION,
+        senderId: relayClientId,
+        sessionId: pairCode ? `session_${pairCode.toLowerCase()}` : 'session_default',
+        token: pairCode,
+        ts: Date.now(),
+        payload: msg
+      };
+      try { relaySocket.send(JSON.stringify(envelope)); } catch (e) {}
+    }
+
+    function sendDisplayHello(reason) {
+      const msg = { type: 'HELLO', proto: 1, sender: 'display', clientId: relayClientId, reason, ts: Date.now() };
+      if (channel) channel.postMessage(msg);
+      relaySend(msg);
     }
 
     function buildRelayUrl() {
@@ -980,7 +1027,7 @@
         relayReconnectTimer = null;
         connectRelay();
       }, relayBackoff);
-      relayBackoff = Math.min(relayBackoff * 1.5, 15000);
+      relayBackoff = Math.min(relayBackoff * 1.5, hasSynced ? 3000 : 5000);
     }
 
     function connectRelay() {
@@ -997,7 +1044,8 @@
       }
       relaySocket.onopen = () => {
         relayBackoff = 1500;
-        relaySend({ type: 'HELLO', proto: 1, sender: 'display', ts: Date.now() });
+        relayConnectedOnce = true;
+        sendDisplayHello('relay-open');
       };
       relaySocket.onclose = () => {
         scheduleRelayReconnect();
@@ -1006,7 +1054,9 @@
       relaySocket.onmessage = (event) => {
         let data = null;
         try { data = JSON.parse(event.data); } catch (e) { return; }
-        handleInboundMessage(data, 'relay');
+        const payload = relayNormalizeInbound(data);
+        if (!payload) return;
+        handleInboundMessage(payload, 'relay');
       };
     }
 
@@ -1075,6 +1125,14 @@
 
     function getLtOffsetX(d) {
       return Math.max(-1200, Math.min(1200, Number(d && d.ltOffsetX) || 0));
+    }
+
+    function getFullOffsetX(d) {
+      return Math.max(-1200, Math.min(1200, Number(d && d.fullOffsetX) || 0));
+    }
+
+    function getFullOffsetY(d) {
+      return Math.max(-1200, Math.min(1200, Number(d && d.fullOffsetY) || 0));
     }
 
     function getLtBorderRadius(d) {
@@ -2278,7 +2336,7 @@
         elements.txt.style.height = '100%';
         const fullPadLR = Math.max(0, Number(d.padLRFull ?? d.padLR ?? 5));
         elements.txt.style.padding = `0 ${fullPadLR}%`;
-        elements.txt.style.transform = 'none'; // here
+        elements.txt.style.transform = `translate(${getFullOffsetX(d)}px, ${getFullOffsetY(d)}px)`;
         elements.txt.style.display = 'flex';
         elements.txt.style.alignItems = (hAlign === 'left') ? 'flex-start' : (hAlign === 'right') ? 'flex-end' : (hAlign === 'justify' ? 'stretch' : 'center');
         elements.txt.style.justifyContent = (vAlign === 'top') ? 'flex-start' : (vAlign === 'bottom' ? 'flex-end' : 'center');

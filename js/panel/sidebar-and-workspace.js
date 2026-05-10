@@ -177,6 +177,7 @@
       updateLinePickerAvailability();
       updateCustomModeAvailability();
       updateTextEditorModeAvailability();
+      if (typeof updateWorkspaceFontSizeControl === 'function') updateWorkspaceFontSizeControl();
       const bgToggle = document.getElementById('bg-toggle');
       const shouldPreserveLtBg = prevTab === 'bible' &&
         tab === 'songs' &&
