@@ -285,6 +285,16 @@
       gap: 0;
     }
 
+    .dual-secondary-wrapper-lt {
+      margin-top: 0px;
+      padding-top: 0px;
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
     .dual-secondary-wrapper .jo-ref-line {
       margin-bottom: 2px !important;
       opacity: 0.85;
@@ -769,6 +779,7 @@
     // DOM Elements
     const elements = {
       txt: document.getElementById('text-container'),
+      ref_badge: document.getElementById('ref-badge'),
       bg: document.getElementById('bg-layer'),
       bgCrossfade: document.getElementById('bg-layer-crossfade'),
       bgVideo: document.getElementById('bg-video'),
@@ -2218,6 +2229,8 @@
     
     // Handle standard mode (non-custom)
     function handleStandardMode(d, mode, isBible) {
+
+      console.log(`Data for standard mode:`, d);
       // Hide custom elements
       elements.customRefBox.style.display = 'none';
       if (elements.customVersionBar) elements.customVersionBar.style.display = 'none';
@@ -2245,7 +2258,6 @@
       if (stdFont.direction === 'rtl') elements.txt.style.unicodeBidi = 'plaintext';
       if (stdFont.textAlign) elements.txt.style.textAlign = stdFont.textAlign;
       elements.txt.style.fontSize = (mode === 'full' ? d.fontSizeFull : d.fontSizeLT) + 'pt';
-      elements.txt.style.fontSize = convertPtToVw(Number(elements.txt.style.fontSize.replace('pt', ''))) + 'vw';
       elements.txt.style.lineHeight = (mode === 'full' ? d.lineHeightFull : (d.lineHeightLT || 1.1));
       const effectiveTextTransform = (mode === 'full')
         ? (!isBible ? (d.fullTextTransform || 'none') : 'none')
@@ -2272,7 +2284,7 @@
         elements.txt.style.justifyContent = (vAlign === 'top') ? 'flex-start' : (vAlign === 'bottom' ? 'flex-end' : 'center');
         elements.txt.style.flexDirection = 'column';
         elements.txt.style.margin = '0 auto';
-        // elements.txt.style.fontSize = '5vw';
+        elements.txt.style.fontSize = clamp(0.2, convertPtToVw(d.displayViewportWidth, d.dualVersionMode, d.fontSizeFull), 0.5) / 1.2 + 'vw';
       } else {
         // Lower third mode
         const ltAnchorMode = getLtAnchorMode(d);
@@ -2297,6 +2309,7 @@
         elements.txt.style.alignItems = (hAlignLT === 'left') ? 'flex-start' : (hAlignLT === 'right') ? 'flex-end' : (hAlignLT === 'justify' ? 'stretch' : 'center');
         elements.txt.style.justifyContent = (vAlignLT === 'top') ? 'flex-start' : (vAlignLT === 'bottom' ? 'flex-end' : 'center');
         elements.txt.style.flexDirection = 'column';
+        elements.txt.style.fontSize = clamp(0.2, convertPtToVw(d.displayViewportWidth, d.dualVersionMode, d.fontSizeLT), 0.5) / 2 + 'vw';
 
         // For Bible LT remove any inline background color on the reference line so it's transparent
         if (isBible) {
@@ -2323,17 +2336,17 @@
    * @returns {number} - The equivalent value in vw units
    * Custom code by Phreaker
    */
-  function convertPtToVw(pt) {
+  function convertPtToVw(viewportWidth, isDualMode, pt) {
     // 1pt = 1.3333... pixels (96 DPI / 72 pt per inch)
     const px = pt * (96 / 72);
-
-    // Get current viewport width (1vw = 1% of this width)
-    const viewportWidth = window.innerWidth;
 
     // Calculate vw: (px / viewportWidth) * 100
     const vw = (px / viewportWidth) * 100;
 
-    return (vw + 2).toFixed(3); // Returns as a string with 3 decimal places
+    const size_out = (vw + 2).toFixed(3);
+    debug(`Converted ${pt}pt to ${size_out}vw (viewport width: ${viewportWidth}px)`);
+
+    return size_out; // Returns as a string with 3 decimal places
   }
 
     function isGifSource(src) {

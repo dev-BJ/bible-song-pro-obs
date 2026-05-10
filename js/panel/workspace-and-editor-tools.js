@@ -1244,7 +1244,7 @@
       const styles = [
         `color:${foregroundColor}`,
         'font-weight:800',
-        `font-size:${fontSizePt}pt`,
+        `font-size:100%`,
         'display:inline-block',
         `border-radius:${opts.borderRadius || '12px'}`,
         'white-space:nowrap',
@@ -1256,13 +1256,13 @@
       if (refBgEnabled && allowBackground) {
         styles.push(`background:${backgroundColor || '#000000'}`);
         styles.push(`padding:${paddingValue}`);
-        styles.push(referenceShadowEnabled ? 'box-shadow:0 10px 24px rgba(0,0,0,0.42);' : 'box-shadow:none;');
-        styles.push('text-shadow:none;');
+        styles.push(referenceShadowEnabled ? 'box-shadow:0 10px 24px rgba(0,0,0,0.42)' : 'box-shadow:none');
+        styles.push('text-shadow:none');
       } else {
         styles.push('background:transparent');
         styles.push('padding:0');
-        styles.push('box-shadow:none;');
-        styles.push(referenceShadowEnabled ? 'text-shadow:0 10px 24px rgba(0,0,0,0.65);' : 'text-shadow:none;');
+        styles.push('box-shadow:none');
+        styles.push(referenceShadowEnabled ? 'text-shadow:0 10px 24px rgba(0,0,0,0.65)' : 'text-shadow:none');
       }
       return `<span style="${styles.join(';')}">${text}</span>`;
     }
@@ -1271,7 +1271,7 @@
       const normalizedAlign = (['left', 'right', 'center'].includes(refAlign) ? refAlign : 'center');
       const containerAlign = (refAlign === 'justify') ? 'left' : normalizedAlign;
       const refBadge = buildReferenceBadgeSpan(referenceLabel, refSize, refColor, refBgColor, { textTransform: refTextTransform || fullRefTextTransform });
-      const refHtml = `<div style="text-align:${containerAlign};margin:0 20px 20px;width:100%">${refBadge}</div>`;
+      const refHtml = `<div style="text-align:${containerAlign};margin:0 20px 20px;width:100%;font-size:${refSize}pt">${refBadge}</div>`;
       const extraSpacingStyle = verseAlign === 'justify'
         ? 'word-spacing:0;letter-spacing:0;text-justify:inter-word;'
         : '';
@@ -1288,7 +1288,7 @@
         refBgColor,
         { allowBackground, padding, borderRadius, textTransform: refTextTransform || ltRefTextTransform }
       );
-      return `<div class="jo-ref-line" style="margin-bottom:3px;width:100%;text-align:${alignValue}">${refBadge}</div>` +
+      return `<div class="jo-ref-line" style="margin-bottom:3px;width:100%;text-align:${alignValue};font-size:${refSize}pt">${refBadge}</div>` +
              `<div class="jo-body" style="${verseShadowStyle}">${verseHtml}</div>`;
     }
 

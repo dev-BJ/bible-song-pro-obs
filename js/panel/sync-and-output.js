@@ -867,11 +867,12 @@
           }
         }
         if (secondarySegment) {
-          dualSectionHtml = `<div class="dual-secondary-wrapper">${secondarySegment}</div>`;
+          dualSectionHtml = (mode === 'full')? `<div class="dual-secondary-wrapper">${secondarySegment}</div>` : `<div class="dual-secondary-wrapper-lt" style="width:50%;height:100%;">${secondarySegment}</div>`;
         }
       }
+
       if (dualSectionHtml) {
-        outHtml = `<div class="dual-primary-block">${outHtml}</div>${dualSectionHtml}`;
+        outHtml = (mode === 'full')? `<div class="dual-primary-block">${outHtml}</div>${dualSectionHtml}` : `<div style="width:100%;height:100%;display:flex;flex-direction:row;"><div class="dual-primary-block" style="width:50%;height:100%;">${outHtml}</div>${dualSectionHtml}</div>`;
       }
       const payload = {
         text: outHtml,
@@ -881,6 +882,8 @@
         fontWeight,
         fontSizeFull: fontSizeFullAdjusted,
         fontSizeLT: fontSizeAdjusted,
+        fullRefFontSize: refFontSize,
+        ltRefFontSize: ltRefSize,
         lineHeightFull: lineHeightFullAdjusted,
         lineHeightLT: lineHeightAdjusted,
         ltWidthPct: ui.ltWidthPct,
