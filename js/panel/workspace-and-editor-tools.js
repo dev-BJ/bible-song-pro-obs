@@ -1446,7 +1446,7 @@
       const styles = [
         `color:${foregroundColor}`,
         'font-weight:800',
-        `font-size:100%`,
+        `font-size:${fontSizePt}pt`,
         'display:inline-block',
         `border-radius:${opts.borderRadius || '12px'}`,
         'white-space:nowrap',
@@ -1466,7 +1466,7 @@
         styles.push('box-shadow:none');
         styles.push(referenceShadowEnabled ? 'text-shadow:0 10px 24px rgba(0,0,0,0.65)' : 'text-shadow:none');
       }
-      return `<span style="${styles.join(';')}">${text}</span>`;
+      return `<span id="ref-badge" style="${styles.join(';')}">${text}</span>`;
     }
 
     function buildFullBibleSegment({ referenceLabel, verseHtml, refSize, refColor, refBgColor, verseAlign, refAlign, verseShadowStyle, refPosition, refTextTransform }) {
@@ -1490,7 +1490,7 @@
         refBgColor,
         { allowBackground, padding, borderRadius, textTransform: refTextTransform || ltRefTextTransform }
       );
-      return `<div class="jo-ref-line" style="margin-bottom:3px;width:100%;text-align:${alignValue};font-size:${refSize}pt">${refBadge}</div>` +
+      return `<div class="jo-ref-line" style="margin-bottom:3px;width:100%;text-align:${alignValue};">${refBadge}</div>` +
              `<div class="jo-body" style="${verseShadowStyle}">${verseHtml}</div>`;
     }
 
